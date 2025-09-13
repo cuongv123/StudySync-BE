@@ -1,8 +1,8 @@
 import { DocumentBuilder } from '@nestjs/swagger';
 
 export const config = new DocumentBuilder()
-  .setTitle('Jewelry API')
-  .setDescription('The jewelry API description')
+  .setTitle('StudySync')
+  .setDescription('back-end for StudySync application')
   .setVersion('1.0')
   .addBearerAuth(
     {
