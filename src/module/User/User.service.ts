@@ -9,6 +9,8 @@ import { User } from './User.entity';
 import * as bcrypt from 'bcrypt';
 import { UpdatePasswordDto } from './dto/update-password';
 import * as crypto from 'crypto'; // Thêm để generate random password nếu cần
+import { CreateUserDto } from './dto/create-user.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
 
 @Injectable()
 export class UsersService {
@@ -92,4 +94,23 @@ export class UsersService {
     const newUser = this.userRepository.create(userData);
     return this.userRepository.save(newUser);
   }
+
+  async createAdmin(createUserDto: CreateUserDto): Promise<User> {
+    const existing = await this.findByEmail(createUserDto.email);
+    if (existing) throw new BadRequestException('Email already exists');
+
+    const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
+    const newUser = this.userRepository.create({
+      ...createUserDto,
+      password: hashedPassword,
+    });
+    return this.userRepository.save(newUser);
+  }
+
+  async update(id: string, updateUserDto: UpdateUserDto): Promise<User> {
+    const user = await this.findOne(id);
+    Object.assign(user, updateUserDto);
+    return this.userRepository.save(user);
+  }
+
 }

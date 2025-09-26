@@ -6,6 +6,8 @@ import {
   Param,
   Delete,
   Req,
+  UseGuards,
+  Post,
 } from '@nestjs/common';
 import { UsersService } from './User.service';
 import { ApiOkResponse, ApiSecurity, ApiTags } from '@nestjs/swagger';
@@ -14,10 +16,13 @@ import { Roles } from 'src/decorator/roles.decorator';
 import { UpdatePasswordDto } from './dto/update-password';
 import { ResetPasswordDto } from './dto/reset-password';
 import { User } from './User.entity';
+import { JwtAuthGuard } from '../auth/guards/jwt.auth.guard';
+import { RolesGuard } from '../auth/guards/RolesGuard';
 
 @Controller('users')
 @ApiTags('Users')
 @ApiSecurity('JWT-auth')
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
@@ -51,14 +56,13 @@ export class UsersController {
       },
     },
   })
-  updatePassword(
-    @Body() updatePasswordDto: UpdatePasswordDto,
-    @Req() req: { user: { userId: string } }, // Type req.user từ JWT
-  ) {
-    const { userId } = req.user;
-    return this.usersService.updatePassword(userId, updatePasswordDto);
-  }
 
+  @UseGuards(JwtAuthGuard)
+  @Post('update-password')
+  async updatePassword(@Req() req, @Body() dto: UpdatePasswordDto) {
+    const { userId } = req.user; // phải đúng key mà JwtStrategy trả về
+    return this.usersService.updatePassword(userId, dto);
+  }
   /**
    * [ADMIN] can reset password of user
    */
