@@ -5,7 +5,7 @@ import{
     JoinColumn,
     OneToOne,
 } from 'typeorm';
-import { User } from '../user/user.entity';
+import { User } from '../User/User.entity';
 
 @Entity('tokens')
 export class Token {

@@ -1,6 +1,6 @@
 import { DataSource } from 'typeorm';
 // Update the import path to match the actual location and filename of User.entity.ts
-import { User } from '../module/user/user.entity';
+import { User } from '../module/User/User.entity';
 import * as dotenv from 'dotenv';
 import { Token } from 'src/module/token/token.entity';
 
