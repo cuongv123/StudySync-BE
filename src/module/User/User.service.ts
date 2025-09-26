@@ -1,4 +1,3 @@
-// src/modules/user/user.service.ts
 import {
   Injectable,
   NotFoundException,
@@ -9,9 +8,13 @@ import { Repository } from 'typeorm';
 import { User } from './User.entity';
 import * as bcrypt from 'bcrypt';
 import { UpdatePasswordDto } from './dto/update-password';
+import * as crypto from 'crypto'; // Thêm để generate random password nếu cần
 
 @Injectable()
 export class UsersService {
+  findByUsername(username: string) {
+    throw new Error('Method not implemented.');
+  }
   constructor(
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
@@ -36,7 +39,10 @@ export class UsersService {
   /**
    * [USER] Đổi mật khẩu của chính mình
    */
-  async updatePassword(userId: string, dto: UpdatePasswordDto) {
+  async updatePassword(
+    userId: string,
+    dto: UpdatePasswordDto,
+  ): Promise<{ message: string }> {
     const user = await this.findOne(userId);
 
     // Kiểm tra mật khẩu cũ
@@ -53,17 +59,20 @@ export class UsersService {
   /**
    * [ADMIN] Reset mật khẩu của user bất kỳ
    */
-  async resetPassword(userId: string) {
+  async resetPassword(
+    userId: string,
+    newPassword?: string,
+  ): Promise<{ message: string }> {
     const user = await this.findOne(userId);
 
-    const newPassword = '123456'; // 👈 hoặc generate random
-    user.password = await bcrypt.hash(newPassword, 10);
+    // Nếu không cung cấp newPassword, generate random (8 ký tự)
+    const resetPass = newPassword || crypto.randomBytes(4).toString('hex');
+    user.password = await bcrypt.hash(resetPass, 10);
     await this.userRepository.save(user);
 
     return {
       message: 'Password reset successfully',
-      resetPassword: newPassword,
-    };
+    }; // Không return resetPass ở production để tránh lộ; gửi email thay thế
   }
 
   /**
@@ -74,9 +83,11 @@ export class UsersService {
     await this.userRepository.remove(user);
     return { message: 'User deleted successfully' };
   }
-   async findByEmail(email: string): Promise<User | null> {
+
+  async findByEmail(email: string): Promise<User | null> {
     return this.userRepository.findOne({ where: { email } });
   }
+
   async create(userData: Partial<User>): Promise<User> {
     const newUser = this.userRepository.create(userData);
     return this.userRepository.save(newUser);

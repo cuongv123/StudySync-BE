@@ -1,5 +1,14 @@
+import { IsOptional, IsArray, IsString } from 'class-validator'; // Thêm nếu cần validation
+
 export class SaveTokenDto {
-    refeshtokenused?: String[];
-    accessToken: String;
-    refreshToken: String;
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  refeshtokenused?: string[];
+
+  @IsString()
+  accessToken: string;
+
+  @IsString()
+  refreshToken: string;
 }

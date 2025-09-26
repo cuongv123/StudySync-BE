@@ -3,6 +3,7 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { User } from 'src/module/User/User.entity';
+import { Token } from 'src/module/token/token.entity';
 
 @Module({
   imports: [
@@ -29,7 +30,7 @@ import { User } from 'src/module/User/User.entity';
             type: 'postgres',
             // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
             url: databaseUrl,
-            entities: [User],
+            entities: [User,Token],
             synchronize: true, // Chỉ nên dùng trong development, tắt trong production
             migrations: [__dirname + '/../migrations/*{.ts,.js}'],
             retryAttempts: 5,
@@ -50,7 +51,7 @@ import { User } from 'src/module/User/User.entity';
           password: configService.get<string>('DEV_DB_PASSWORD'),
           // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
           database: configService.get<string>('DEV_DB_DATABASE'),
-          entities: [User],
+          entities: [User,Token],
           migrations:
             process.env.NODE_ENV === 'production'
               ? ['dist/migrations/*.js']

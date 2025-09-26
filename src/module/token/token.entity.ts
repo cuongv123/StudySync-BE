@@ -1,30 +1,30 @@
-import{
-    Column,
-    Entity,
-    PrimaryGeneratedColumn,
-    JoinColumn,
-    OneToOne,
+import {
+  Column,
+  Entity,
+  PrimaryGeneratedColumn,
+  JoinColumn,
+  OneToOne,
 } from 'typeorm';
 import { User } from '../User/User.entity';
 
 @Entity('tokens')
 export class Token {
-    @PrimaryGeneratedColumn("identity")
-    id: number;
+  @PrimaryGeneratedColumn() // Sửa thành auto-increment chuẩn
+  id: number;
 
-    @Column({
+  @Column({
     type: 'simple-array',
-    default: '',
-    })
-    refeshtokenused: String[];
+    default: () => 'ARRAY[]::text[]', // Default array rỗng
+  })
+  refeshtokenused: string[];
 
-    @Column()
-    accessToken: String;
+  @Column()
+  accessToken: string;
 
-    @Column()
-    refreshToken: String;
+  @Column()
+  refreshToken: string;
 
-    @OneToOne (() => User, { onDelete: 'CASCADE' })
-    @JoinColumn({ name: 'userId' })
-    user: User;
+  @OneToOne(() => User, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'userId' })
+  user: User;
 }

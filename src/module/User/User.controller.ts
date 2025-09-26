@@ -11,10 +11,9 @@ import { UsersService } from './User.service';
 import { ApiOkResponse, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { Role } from 'src/common/enums/role.enum';
 import { Roles } from 'src/decorator/roles.decorator';
-import express from 'express';  
 import { UpdatePasswordDto } from './dto/update-password';
 import { ResetPasswordDto } from './dto/reset-password';
-import { User } from  './User.entity';
+import { User } from './User.entity';
 
 @Controller('users')
 @ApiTags('Users')
@@ -44,32 +43,39 @@ export class UsersController {
    * [USER] can change own password
    */
   @Patch('me/password')
-  @Roles(Role.USER) // 👈 user (student) tự đổi password của mình
+  @Roles(Role.USER)
   @ApiOkResponse({
     schema: {
-        example: {
-          message: 'Password successfully updated',
-        },
+      example: {
+        message: 'Password successfully updated',
       },
-    })
-    updatePassword(
-      @Body() updatePasswordDto: UpdatePasswordDto,
-      @Req() req: any,
-    ) {
-      const { userId } = req.user;
-  
-      return this.usersService.updatePassword(userId, updatePasswordDto);
-    }
-  
+    },
+  })
+  updatePassword(
+    @Body() updatePasswordDto: UpdatePasswordDto,
+    @Req() req: { user: { userId: string } }, // Type req.user từ JWT
+  ) {
+    const { userId } = req.user;
+    return this.usersService.updatePassword(userId, updatePasswordDto);
+  }
 
   /**
    * [ADMIN] can reset password of user
    */
   @Patch(':id/password')
   @Roles(Role.ADMIN)
-  @ApiOkResponse({ type: ResetPasswordDto })
-  async resetPassword(@Param('id') id: string) {
-    return this.usersService.resetPassword(id);
+  @ApiOkResponse({
+    schema: {
+      example: {
+        message: 'Password reset successfully',
+      },
+    },
+  })
+  async resetPassword(
+    @Param('id') id: string,
+    @Body() resetPasswordDto: ResetPasswordDto,
+  ) {
+    return this.usersService.resetPassword(id, resetPasswordDto.newPassword);
   }
 
   /**
