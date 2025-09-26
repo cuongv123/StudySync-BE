@@ -1,8 +1,8 @@
 
 import { SaveTokenDto } from './dto/save-token';
-import { UsersService } from '../user/user.service';
+
 import { Token } from './token.entity';
-import { User } from '../user/user.entity';
+import { User } from '../User/User.entity';
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Like, Repository } from 'typeorm';
