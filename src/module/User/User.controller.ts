@@ -6,19 +6,23 @@ import {
   Param,
   Delete,
   Req,
+  UseGuards,
+  Post,
 } from '@nestjs/common';
 import { UsersService } from './User.service';
 import { ApiOkResponse, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { Role } from 'src/common/enums/role.enum';
 import { Roles } from 'src/decorator/roles.decorator';
-import express from 'express';  
 import { UpdatePasswordDto } from './dto/update-password';
 import { ResetPasswordDto } from './dto/reset-password';
-import { User } from  './User.entity';
+import { User } from './User.entity';
+import { JwtAuthGuard } from '../auth/guards/jwt.auth.guard';
+import { RolesGuard } from '../auth/guards/RolesGuard';
 
 @Controller('users')
 @ApiTags('Users')
 @ApiSecurity('JWT-auth')
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
@@ -44,32 +48,38 @@ export class UsersController {
    * [USER] can change own password
    */
   @Patch('me/password')
-  @Roles(Role.USER) // 👈 user (student) tự đổi password của mình
+  @Roles(Role.USER)
   @ApiOkResponse({
     schema: {
-        example: {
-          message: 'Password successfully updated',
-        },
+      example: {
+        message: 'Password successfully updated',
       },
-    })
-    updatePassword(
-      @Body() updatePasswordDto: UpdatePasswordDto,
-      @Req() req: any,
-    ) {
-      const { userId } = req.user;
-  
-      return this.usersService.updatePassword(userId, updatePasswordDto);
-    }
-  
+    },
+  })
 
+  @UseGuards(JwtAuthGuard)
+  @Post('update-password')
+  async updatePassword(@Req() req, @Body() dto: UpdatePasswordDto) {
+    const { userId } = req.user; // phải đúng key mà JwtStrategy trả về
+    return this.usersService.updatePassword(userId, dto);
+  }
   /**
    * [ADMIN] can reset password of user
    */
   @Patch(':id/password')
   @Roles(Role.ADMIN)
-  @ApiOkResponse({ type: ResetPasswordDto })
-  async resetPassword(@Param('id') id: string) {
-    return this.usersService.resetPassword(id);
+  @ApiOkResponse({
+    schema: {
+      example: {
+        message: 'Password reset successfully',
+      },
+    },
+  })
+  async resetPassword(
+    @Param('id') id: string,
+    @Body() resetPasswordDto: ResetPasswordDto,
+  ) {
+    return this.usersService.resetPassword(id, resetPasswordDto.newPassword);
   }
 
   /**

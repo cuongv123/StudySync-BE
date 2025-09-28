@@ -1,25 +1,27 @@
-
-import { SaveTokenDto } from './dto/save-token';
-
-import { Token } from './token.entity';
-import { User } from '../User/User.entity';
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Like, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
+import { Token } from './token.entity';
+import { User } from '../User/User.entity';
+import { SaveTokenDto } from './dto/save-token';
+
 @Injectable()
 export class TokenService {
   constructor(
     @InjectRepository(Token)
-    private readonly tokenRepository: Repository<Token>, 
+    private readonly tokenRepository: Repository<Token>,
     @InjectRepository(User)
-    private readonly userRepository: Repository<User>, 
+    private readonly userRepository: Repository<User>,
   ) {}
 
   async create(user: User, saveTokenDto: SaveTokenDto): Promise<Token> {
-    let token = await this.tokenRepository.findOne({ where: { user: { id: user.id } } });
+    let token = await this.tokenRepository.findOne({
+      where: { user: { id: user.id } },
+      relations: ['user'], // Load relation nếu cần
+    });
 
     if (token) {
-        token = {
+      token = {
         ...token,
         ...saveTokenDto,
       };
@@ -38,29 +40,40 @@ export class TokenService {
   }
 
   async findByRefreshTokenUsed(refreshToken: string): Promise<Token | null> {
-    return await this.tokenRepository.findOne({
-      where: {
-        refeshtokenused: Like(`%${refreshToken}%`),
-      },
-    });
+    // Cải thiện: Tìm array contains exact token (TypeORM hỗ trợ contains cho simple-array)
+    return await this.tokenRepository
+      .createQueryBuilder('token')
+      .where(':refreshToken = ANY(token.refeshtokenused)', { refreshToken })
+      .getOne();
   }
+
   async findByRefreshToken(refreshToken: string): Promise<Token | null> {
     return await this.tokenRepository.findOne({
       where: { refreshToken },
+      relations: ['user'],
     });
   }
 
   async findAccessToken(accessToken: string): Promise<Token | null> {
     return await this.tokenRepository.findOne({
       where: { accessToken },
+      relations: ['user'],
     });
   }
 
+  // Thêm method để add used refresh token khi refresh (ngăn replay)
+  async addUsedRefreshToken(userId: string, usedRefreshToken: string): Promise<Token> {
+    const token = await this.tokenRepository.findOne({
+      where: { user: { id: userId } },
+    });
+    if (!token) throw new BadRequestException('Token not found');
+    token.refeshtokenused = [...(token.refeshtokenused || []), usedRefreshToken];
+    return await this.tokenRepository.save(token);
+  }
+
   async deleteByUserId(userId: string): Promise<boolean> {
-    const user = await this.userRepository.findOne({ where: { id: userId } });
-    if (!user) throw new BadRequestException('User not found!');
-  
+    // Không cần find user, delete trực tiếp
     const deleteResult = await this.tokenRepository.delete({ user: { id: userId } });
-    return (deleteResult.affected ?? 0) > 0; 
-    }
+    return (deleteResult.affected ?? 0) > 0;
+  }
 }
