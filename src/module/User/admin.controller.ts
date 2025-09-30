@@ -38,7 +38,9 @@ export class AdminUsersController {
 
   @Patch(':id/password')
   @Roles(Role.ADMIN)
-  @ApiOkResponse({ schema: { example: { message: 'Password reset successfully' }}})
+  @ApiOkResponse({
+    schema: { example: { message: 'Password reset successfully' } },
+  })
   async resetPassword(@Param('id') id: string, @Body() dto: ResetPasswordDto) {
     return this.usersService.resetPassword(id, dto.newPassword);
   }

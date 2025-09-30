@@ -41,7 +41,12 @@ export class AuthService {
       role: [Role.USER],
     });
 
-    return { message: 'Register success', userId: newUser.id, email: newUser.email, role: newUser.role };
+    return {
+      message: 'Register success',
+      userId: newUser.id,
+      email: newUser.email,
+      role: newUser.role,
+    };
   }
 
   async validateUser(email: string, pass: string) {
@@ -49,7 +54,8 @@ export class AuthService {
     if (!user) throw new UnauthorizedException('Invalid credentials');
 
     const isPasswordValid = await bcrypt.compare(pass, user.password);
-    if (!isPasswordValid) throw new UnauthorizedException('Invalid credentials');
+    if (!isPasswordValid)
+      throw new UnauthorizedException('Invalid credentials');
 
     const { password: _, ...result } = user;
     return result;
@@ -61,10 +67,18 @@ export class AuthService {
   }
 
   private async generateAndSaveTokens(user: any) {
-    const payload = { sub: user.id, email: user.email, role: user.role, jti: this.genJti() };
+    const payload = {
+      sub: user.id,
+      email: user.email,
+      role: user.role,
+      jti: this.genJti(),
+    };
 
     const accessToken = this.jwtService.sign(payload, { expiresIn: '15m' });
-    const refreshToken = this.jwtService.sign({ ...payload, typ: 'refresh' }, { expiresIn: '7d' });
+    const refreshToken = this.jwtService.sign(
+      { ...payload, typ: 'refresh' },
+      { expiresIn: '7d' },
+    );
 
     await this.tokenService.create(user, {
       accessToken,
@@ -84,11 +98,13 @@ export class AuthService {
       throw new UnauthorizedException('Invalid or expired refresh token');
     }
 
-    if (decoded.typ !== 'refresh') throw new UnauthorizedException('Invalid token type');
+    if (decoded.typ !== 'refresh')
+      throw new UnauthorizedException('Invalid token type');
 
     const userId = decoded.sub;
 
-    const storedToken = await this.tokenService.findByRefreshToken(refreshToken);
+    const storedToken =
+      await this.tokenService.findByRefreshToken(refreshToken);
     if (!storedToken) throw new UnauthorizedException('No refresh token found');
 
     if (storedToken.refeshtokenused.includes(refreshToken)) {

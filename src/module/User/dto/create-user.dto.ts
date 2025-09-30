@@ -1,5 +1,12 @@
 // create-user.dto.ts
-import { IsEmail, IsNotEmpty, IsString, MinLength, IsEnum, IsArray } from 'class-validator';
+import {
+  IsEmail,
+  IsNotEmpty,
+  IsString,
+  MinLength,
+  IsEnum,
+  IsArray,
+} from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { Role } from 'src/common/enums/role.enum';
 

@@ -62,18 +62,26 @@ export class TokenService {
   }
 
   // Thêm method để add used refresh token khi refresh (ngăn replay)
-  async addUsedRefreshToken(userId: string, usedRefreshToken: string): Promise<Token> {
+  async addUsedRefreshToken(
+    userId: string,
+    usedRefreshToken: string,
+  ): Promise<Token> {
     const token = await this.tokenRepository.findOne({
       where: { user: { id: userId } },
     });
     if (!token) throw new BadRequestException('Token not found');
-    token.refeshtokenused = [...(token.refeshtokenused || []), usedRefreshToken];
+    token.refeshtokenused = [
+      ...(token.refeshtokenused || []),
+      usedRefreshToken,
+    ];
     return await this.tokenRepository.save(token);
   }
 
   async deleteByUserId(userId: string): Promise<boolean> {
     // Không cần find user, delete trực tiếp
-    const deleteResult = await this.tokenRepository.delete({ user: { id: userId } });
+    const deleteResult = await this.tokenRepository.delete({
+      user: { id: userId },
+    });
     return (deleteResult.affected ?? 0) > 0;
   }
 }

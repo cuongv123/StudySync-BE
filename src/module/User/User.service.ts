@@ -137,5 +137,4 @@ export class UsersService {
     Object.assign(user, updateUserDto);
     return this.userRepository.save(user);
   }
-
 }

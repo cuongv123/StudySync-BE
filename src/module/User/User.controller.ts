@@ -26,9 +26,11 @@ export class UsersController {
 
   @Patch('me/password')
   @Roles(Role.USER)
-  @ApiOkResponse({ schema: { example: { message: 'Password successfully updated' }}})
+  @ApiOkResponse({
+    schema: { example: { message: 'Password successfully updated' } },
+  })
   async updatePassword(@Req() req, @Body() dto: UpdatePasswordDto) {
-    const userId = (req.user as any).sub;
+    const userId = req.user.sub;
     return this.usersService.updatePassword(userId, dto);
   }
 }

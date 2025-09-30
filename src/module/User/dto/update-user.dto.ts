@@ -1,5 +1,12 @@
 // update-user.dto.ts (partial, dùng PartialType nếu dùng class-transformer)
-import { IsOptional, IsEmail, IsString, IsBoolean, IsEnum, IsArray } from 'class-validator';
+import {
+  IsOptional,
+  IsEmail,
+  IsString,
+  IsBoolean,
+  IsEnum,
+  IsArray,
+} from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { Role } from 'src/common/enums/role.enum';
 

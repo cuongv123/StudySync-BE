@@ -4,8 +4,6 @@ import { User } from '../module/User/User.entity';
 import * as dotenv from 'dotenv';
 import { Token } from 'src/module/token/token.entity';
 
-
-
 dotenv.config({ path: `.env.${process.env.NODE_ENV || 'development'}` });
 
 export const AppDataSource = new DataSource({
@@ -15,7 +13,7 @@ export const AppDataSource = new DataSource({
   username: process.env.DEV_DB_USERNAME || 'postgres',
   password: process.env.DEV_DB_PASSWORD || '',
   database: process.env.DEV_DB_DATABASE || 'studysync',
-  entities: [User,Token],
+  entities: [User, Token],
   migrations: [__dirname + '/../migrations/*{.ts,.js}'],
   synchronize: false,
   logging: true,
