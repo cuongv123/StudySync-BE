@@ -14,9 +14,6 @@ import { UpdateUserDto } from './dto/update-user.dto';
 
 @Injectable()
 export class UsersService {
-  findByUsername(username: string) {
-    throw new Error('Method not implemented.');
-  }
   constructor(
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
@@ -36,6 +33,34 @@ export class UsersService {
     const user = await this.userRepository.findOne({ where: { id } });
     if (!user) throw new NotFoundException('User not found');
     return user;
+  }
+
+  async findByUsername(username: string): Promise<User | null> {
+    return this.userRepository.findOne({ where: { username } });
+  }
+
+  async updateProfile(userId: string, dto: UpdateUserDto) {
+    const user = await this.findOne(userId);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    if (dto.email) {
+      const existing = await this.findByEmail(dto.email);
+      if (existing && existing.id !== userId) {
+        throw new BadRequestException('Email already exists');
+      }
+      user.email = dto.email;
+    }
+    if (dto.username) {
+      const existing = await this.findByUsername(dto.username);
+      if (existing && existing.id !== userId) {
+        throw new BadRequestException('Username already exists');
+      }
+      user.username = dto.username;
+    }
+
+    return this.userRepository.save(user);
   }
 
   /**
