@@ -14,7 +14,7 @@ export class Token {
 
   @Column({
     type: 'simple-array',
-    default: () => 'ARRAY[]::text[]', // Default array rỗng
+    default: '',
   })
   refeshtokenused: string[];
 
