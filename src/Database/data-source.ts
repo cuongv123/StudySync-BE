@@ -17,6 +17,6 @@ export const AppDataSource = new DataSource({
   database: process.env.DEV_DB_DATABASE || 'studysync',
   entities: [User,Token],
   migrations: [__dirname + '/../migrations/*{.ts,.js}'],
-  synchronize: false,
+  synchronize: true,
   logging: true,
 });

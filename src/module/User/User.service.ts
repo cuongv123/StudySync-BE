@@ -8,34 +8,53 @@ import { Repository } from 'typeorm';
 import { User } from './User.entity';
 import * as bcrypt from 'bcrypt';
 import { UpdatePasswordDto } from './dto/update-password';
-import * as crypto from 'crypto'; // Thêm để generate random password nếu cần
+import * as crypto from 'crypto';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 
 @Injectable()
 export class UsersService {
-  findByUsername(username: string) {
-    throw new Error('Method not implemented.');
-  }
   constructor(
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
   ) {}
 
-  /**
-   * [ADMIN] Lấy toàn bộ user
-   */
   async findAll(): Promise<User[]> {
     return this.userRepository.find();
   }
-
-  /**
-   * [ADMIN] Lấy user theo id
-   */
+ 
   async findOne(id: string): Promise<User> {
     const user = await this.userRepository.findOne({ where: { id } });
     if (!user) throw new NotFoundException('User not found');
     return user;
+  }
+
+  async findByUsername(username: string): Promise<User | null> {
+    return this.userRepository.findOne({ where: { username } });
+  }
+
+  async updateProfile(userId: string, dto: UpdateUserDto) {
+    const user = await this.findOne(userId);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    if (dto.email) {
+      const existing = await this.findByEmail(dto.email);
+      if (existing && existing.id !== userId) {
+        throw new BadRequestException('Email already exists');
+      }
+      user.email = dto.email;
+    }
+    if (dto.username) {
+      const existing = await this.findByUsername(dto.username);
+      if (existing && existing.id !== userId) {
+        throw new BadRequestException('Username already exists');
+      }
+      user.username = dto.username;
+    }
+
+    return this.userRepository.save(user);
   }
 
   /**
@@ -58,28 +77,16 @@ export class UsersService {
     return { message: 'Password successfully updated' };
   }
 
-  /**
-   * [ADMIN] Reset mật khẩu của user bất kỳ
-   */
-  async resetPassword(
-    userId: string,
-    newPassword?: string,
-  ): Promise<{ message: string }> {
-    const user = await this.findOne(userId);
+ async resetPassword(
+  userId: string,
+  newPassword: string, 
+): Promise<{ message: string }> {
+  const user = await this.findOne(userId);
+  user.password = await bcrypt.hash(newPassword, 10);
+  await this.userRepository.save(user);
+  return { message: 'Password reset successfully' };
+}
 
-    // Nếu không cung cấp newPassword, generate random (8 ký tự)
-    const resetPass = newPassword || crypto.randomBytes(4).toString('hex');
-    user.password = await bcrypt.hash(resetPass, 10);
-    await this.userRepository.save(user);
-
-    return {
-      message: 'Password reset successfully',
-    }; // Không return resetPass ở production để tránh lộ; gửi email thay thế
-  }
-
-  /**
-   * [ADMIN] Xóa user
-   */
   async remove(id: string): Promise<{ message: string }> {
     const user = await this.findOne(id);
     await this.userRepository.remove(user);
@@ -107,10 +114,44 @@ export class UsersService {
     return this.userRepository.save(newUser);
   }
 
-  async update(id: string, updateUserDto: UpdateUserDto): Promise<User> {
-    const user = await this.findOne(id);
-    Object.assign(user, updateUserDto);
-    return this.userRepository.save(user);
+async update(id: string, updateUserDto: UpdateUserDto): Promise<User> {
+  const user = await this.findOne(id);
+  
+  if (updateUserDto.email) {
+    const existing = await this.findByEmail(updateUserDto.email);
+    if (existing && existing.id !== id) {
+      throw new BadRequestException('Email already exists');
+    }
+  }
+  
+  if (updateUserDto.username) {
+    const existing = await this.findByUsername(updateUserDto.username);
+    if (existing && existing.id !== id) {
+      throw new BadRequestException('Username already exists');
+    }
+  }
+  
+  Object.assign(user, updateUserDto);
+  return this.userRepository.save(user);
+  }
+  async findUserByToken(tokenOTP: string): Promise<User> {
+    const user = await this.userRepository.findOne({ where: { tokenOTP } });
+
+    if (!user) {
+      throw new NotFoundException('User not found with the provided token');
+    }
+    return user;
+  }
+   async updateUser(user: User): Promise<User> {
+    const existingUser = await this.userRepository.findOne({ where: { id: user.id } });
+
+    if (!existingUser) {
+      throw new NotFoundException('User not found');
+    }
+    existingUser.isVerified = user.isVerified;
+    existingUser.tokenOTP = user.tokenOTP;
+
+    return await this.userRepository.save(existingUser);
   }
 
 }

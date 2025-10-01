@@ -40,10 +40,9 @@ export class TokenService {
   }
 
   async findByRefreshTokenUsed(refreshToken: string): Promise<Token | null> {
-    // Cải thiện: Tìm array contains exact token (TypeORM hỗ trợ contains cho simple-array)
     return await this.tokenRepository
       .createQueryBuilder('token')
-      .where(':refreshToken = ANY(token.refeshtokenused)', { refreshToken })
+      .where(':refreshToken = ANY(token.refeshtokenused)', { refreshToken }) 
       .getOne();
   }
 
@@ -61,7 +60,6 @@ export class TokenService {
     });
   }
 
-  // Thêm method để add used refresh token khi refresh (ngăn replay)
   async addUsedRefreshToken(userId: string, usedRefreshToken: string): Promise<Token> {
     const token = await this.tokenRepository.findOne({
       where: { user: { id: userId } },
@@ -70,9 +68,14 @@ export class TokenService {
     token.refeshtokenused = [...(token.refeshtokenused || []), usedRefreshToken];
     return await this.tokenRepository.save(token);
   }
+   async findByUserId(userId: string): Promise<Token | null> {
+    return await this.tokenRepository.findOne({
+      where: { user: { id: userId } },
+      relations: ['user'],
+    });
+  }
 
   async deleteByUserId(userId: string): Promise<boolean> {
-    // Không cần find user, delete trực tiếp
     const deleteResult = await this.tokenRepository.delete({ user: { id: userId } });
     return (deleteResult.affected ?? 0) > 0;
   }

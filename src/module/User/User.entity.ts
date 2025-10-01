@@ -31,14 +31,18 @@ export class User {
   isVerified: boolean;
 
   @ApiProperty()
-  @Column({ nullable: true })
-  tokenOTP?: string;
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  tokenOTP?: string | null;
+
+  @ApiProperty()
+  @Column({ type: 'timestamp', nullable: true })
+  otpExpiry?: Date | null;
 
   @ApiProperty({ enum: Role, isArray: true })
   @Column({
     type: 'enum',
     enum: Role,
-    array: true, // 👈 Lưu mảng role (ví dụ: ['admin', 'user'])
+    array: true,
     default: [Role.USER],
   })
   role: Role[];
