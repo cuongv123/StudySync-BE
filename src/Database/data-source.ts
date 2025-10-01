@@ -4,19 +4,22 @@ import { User } from '../module/User/User.entity';
 import * as dotenv from 'dotenv';
 import { Token } from 'src/module/token/token.entity';
 
-
-
-dotenv.config({ path: `.env.${process.env.NODE_ENV || 'development'}` });
+dotenv.config({ path: '.env' });
 
 export const AppDataSource = new DataSource({
   type: 'postgres',
-  host: process.env.DEV_DB_HOST || 'localhost',
-  port: parseInt(process.env.DEV_DB_PORT || '5432', 10),
-  username: process.env.DEV_DB_USERNAME || 'postgres',
-  password: process.env.DEV_DB_PASSWORD || '',
-  database: process.env.DEV_DB_DATABASE || 'studysync',
-  entities: [User,Token],
+  url: process.env.DATABASE_URL, // sử dụng connection string Supabase
+  entities: [User, Token],
   migrations: [__dirname + '/../migrations/*{.ts,.js}'],
-  synchronize: true,
+  synchronize: false, // tắt vì bạn dùng migrations
   logging: true,
+  ssl: {
+    rejectUnauthorized: false, // Cần thiết cho Supabase
+  },
+  connectTimeoutMS: 60000, // 60 seconds timeout
+  extra: {
+    ssl: {
+      rejectUnauthorized: false,
+    },
+  },
 });
