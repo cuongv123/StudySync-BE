@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-call */
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
@@ -7,56 +6,49 @@ import { Token } from 'src/module/token/token.entity';
 
 @Module({
   imports: [
-    // ConfigModule đảm bảo biến môi trường được nạp trước
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath:
-        process.env.NODE_ENV === 'production'
-          ? '.env.prod'
-          : '.env.development',
+      envFilePath: '.env',
     }),
 
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
         const databaseUrl = configService.get<string>('DATABASE_URL');
 
-        // Nếu có DATABASE_URL, sử dụng nó
         if (databaseUrl) {
+          // ✅ Khi dùng Supabase (DATABASE_URL)
           return {
             type: 'postgres',
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
             url: databaseUrl,
-            entities: [User,Token],
-            synchronize: true, // Chỉ nên dùng trong development, tắt trong production
+            entities: [User, Token],
             migrations: [__dirname + '/../migrations/*{.ts,.js}'],
+            synchronize: false, // 🚨 tắt, chỉ dùng migrations
+            logging: true,
             retryAttempts: 5,
             retryDelay: 3000,
+            ssl: {
+              rejectUnauthorized: false, // Cần thiết cho Supabase
+            },
           };
         }
 
-        // Nếu không có DATABASE_URL, dùng các biến DEV_DB_*
+        // ✅ Khi chạy local dev
         return {
           type: 'postgres',
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-          host: configService.get<string>('DEV_DB_HOST'),
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-          port: configService.get<number>('DEV_DB_PORT'),
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+          host: configService.get<string>('DEV_DB_HOST', 'localhost'),
+          port: configService.get<number>('DEV_DB_PORT', 5432),
           username: configService.get<string>('DEV_DB_USERNAME', 'postgres'),
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-          password: configService.get<string>('DEV_DB_PASSWORD'),
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-          database: configService.get<string>('DEV_DB_DATABASE'),
-          entities: [User,Token],
+          password: configService.get<string>('DEV_DB_PASSWORD', ''),
+          database: configService.get<string>('DEV_DB_DATABASE', 'studysync'),
+          entities: [User, Token],
           migrations:
             process.env.NODE_ENV === 'production'
               ? ['dist/migrations/*.js']
               : ['../migrations/*.ts'],
-          synchronize: process.env.NODE_ENV !== 'production', // Tắt synchronize trong production
+          synchronize: true, // cho phép sync nhanh ở local
+          logging: true,
           retryAttempts: 5,
           retryDelay: 3000,
         };
