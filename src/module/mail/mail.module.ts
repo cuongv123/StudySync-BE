@@ -15,9 +15,14 @@ import { MailService } from './mail.service';
           host: configService.get<string>('MAIL_HOST'),
           port: configService.get<number>('MAIL_PORT'),
           secure: false, // true for 465, false for other ports
+          requireTLS: true, // Bắt buộc sử dụng TLS cho port 587
           auth: {
             user: configService.get<string>('MAIL_USER'),
             pass: configService.get<string>('MAIL_PASSWORD'),
+          },
+          tls: {
+            rejectUnauthorized: false, // Cho phép self-signed certificates
+            ciphers: 'SSLv3', // Hỗ trợ ciphers cũ hơn
           },
         },
         defaults: {

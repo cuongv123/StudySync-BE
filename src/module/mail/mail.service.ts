@@ -28,7 +28,7 @@ export class MailService {
           username,
           otp,
           expiryMinutes,
-          verifyUrl: `${frontendUrl}/verify-email?email=${otp}`,
+          verifyUrl: `${frontendUrl}/verify-email?email=${encodeURIComponent(email)}`,
           supportEmail: this.configService.get<string>('MAIL_FROM'),
           year: new Date().getFullYear(),
         },
