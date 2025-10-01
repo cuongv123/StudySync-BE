@@ -7,6 +7,6 @@ import { MailModule } from './module/mail/mail.module';
 
 
 @Module({
-    imports: [UserModule,DatabaseModule,AuthModule,TokenModule,MailModule],
+    imports: [UserModule,DatabaseModule,AuthModule,TokenModule,MailModule,],
 })
 export class AppModule {}

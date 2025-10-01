@@ -4,9 +4,11 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
+  OneToMany,
 } from 'typeorm';
-import { Role } from 'src/common/enums/role.enum';
 import { ApiProperty } from '@nestjs/swagger';
+import { Role } from 'src/common/enums/role.enum';
+
 
 @Entity('users')
 export class User {
@@ -56,4 +58,8 @@ export class User {
 
   @UpdateDateColumn()
   updatedAt: Date;
+
+  // -------------------------------
+  // RELATIONS
+  // -------------------------------
 }
