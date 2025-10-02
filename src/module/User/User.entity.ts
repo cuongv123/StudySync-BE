@@ -1,3 +1,4 @@
+
 import {
   Entity,
   PrimaryGeneratedColumn,
@@ -51,9 +52,31 @@ export class User {
   @Column({ default: true })
   isActive: boolean;
 
+  @ApiProperty({
+    description: 'Số điện thoại của user',
+    example: '0123456789'
+  })
+  @Column({ type: 'varchar', length: 15, nullable: true })
+  phoneNumber?: string | null;
+
+  @ApiProperty({
+    description: 'Mã số sinh viên',
+    example: 'SV001234'
+  })
+  @Column({ type: 'varchar', length: 20, nullable: true, unique: true })
+  studentId?: string | null;
+
+  @ApiProperty({
+    description: 'Chuyên ngành của sinh viên',
+    example: 'Công nghệ thông tin'
+  })
+  @Column({ type: 'varchar', length: 100, nullable: true })
+  major?: string | null;
+
   @CreateDateColumn()
   createdAt: Date;
 
   @UpdateDateColumn()
   updatedAt: Date;
 }
+
