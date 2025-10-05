@@ -1,3 +1,5 @@
+
+
 import {
   Injectable,
   NotFoundException,
@@ -11,6 +13,8 @@ import { UpdatePasswordDto } from './dto/update-password';
 import * as crypto from 'crypto';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { UpdateProfileDto } from './dto/update-profile.dto';
+import { Role } from 'src/common/enums/role.enum';
 
 @Injectable()
 export class UsersService {
@@ -58,6 +62,45 @@ export class UsersService {
   }
 
   /**
+   * [USER] Cập nhật profile của user (không bao gồm email)
+   * Trả về tất cả thông tin user bao gồm cả email nhưng email không thể sửa
+   */
+  async updateUserProfile(userId: string, dto: UpdateProfileDto): Promise<Omit<User, 'password' | 'tokenOTP' | 'otpExpiry'>> {
+    const user = await this.findOne(userId);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    // Kiểm tra username đã tồn tại chưa
+    if (dto.username && dto.username !== user.username) {
+      const existingUser = await this.findByUsername(dto.username);
+      if (existingUser && existingUser.id !== userId) {
+        throw new BadRequestException('Username đã tồn tại');
+      }
+    }
+
+    // Kiểm tra studentId đã tồn tại chưa
+    if (dto.studentId && dto.studentId !== user.studentId) {
+      const existingUser = await this.userRepository.findOne({ where: { studentId: dto.studentId } });
+      if (existingUser && existingUser.id !== userId) {
+        throw new BadRequestException('Mã số sinh viên đã tồn tại');
+      }
+    }
+
+    // Cập nhật các trường được phép
+    if (dto.username) user.username = dto.username;
+    if (dto.phoneNumber !== undefined) user.phoneNumber = dto.phoneNumber;
+    if (dto.studentId !== undefined) user.studentId = dto.studentId;
+    if (dto.major !== undefined) user.major = dto.major;
+
+    const updatedUser = await this.userRepository.save(user);
+    
+    // Trả về thông tin user (không bao gồm password, tokenOTP, otpExpiry)
+    const { password, tokenOTP, otpExpiry, ...userResponse } = updatedUser;
+    return userResponse;
+  }
+
+  /**
    * [USER] Đổi mật khẩu của chính mình
    */
   async updatePassword(
@@ -102,18 +145,6 @@ export class UsersService {
     return this.userRepository.save(newUser);
   }
 
-  async createAdmin(createUserDto: CreateUserDto): Promise<User> {
-    const existing = await this.findByEmail(createUserDto.email);
-    if (existing) throw new BadRequestException('Email already exists');
-
-    const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
-    const newUser = this.userRepository.create({
-      ...createUserDto,
-      password: hashedPassword,
-    });
-    return this.userRepository.save(newUser);
-  }
-
 async update(id: string, updateUserDto: UpdateUserDto): Promise<User> {
   const user = await this.findOne(id);
   
@@ -152,6 +183,22 @@ async update(id: string, updateUserDto: UpdateUserDto): Promise<User> {
     existingUser.tokenOTP = user.tokenOTP;
 
     return await this.userRepository.save(existingUser);
+  }
+
+  async assignRole(userId: string, role: Role): Promise<{ message: string; user: any }> {
+    const user = await this.findOne(userId);
+    
+    // Cập nhật role của user (chuyển thành mảng vì User entity có role là array)
+    user.role = [role];
+    const updatedUser = await this.userRepository.save(user);
+
+    // Trả về response với thông tin user (không bao gồm password)
+    const { password, tokenOTP, otpExpiry, ...userResponse } = updatedUser;
+    
+    return {
+      message: 'Role đã được cập nhật thành công',
+      user: userResponse,
+    };
   }
 
 }

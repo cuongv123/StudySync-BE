@@ -1,3 +1,4 @@
+
 import {
   Controller,
   Get,
@@ -7,6 +8,7 @@ import {
   Delete,
   Req,
   UseGuards,
+  Put,
 } from '@nestjs/common';
 import { UsersService } from './User.service';
 import { ApiOkResponse, ApiSecurity, ApiTags } from '@nestjs/swagger';
@@ -14,6 +16,7 @@ import { Role } from 'src/common/enums/role.enum';
 import { Roles } from 'src/decorator/roles.decorator';
 import { UpdatePasswordDto } from './dto/update-password';
 import { ResetPasswordDto } from './dto/reset-password';
+import { AssignRoleDto } from './dto/assign-role.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt.auth.guard';
 import { RolesGuard } from '../auth/guards/RolesGuard';
 
@@ -47,5 +50,25 @@ export class AdminUsersController {
   @Roles(Role.ADMIN)
   async delete(@Param('id') id: string) {
     return this.usersService.remove(id);
+  }
+
+  @Patch('assign-role')
+  @Roles(Role.ADMIN)
+  @ApiOkResponse({ 
+    description: 'Cập nhật role thành công',
+    schema: { 
+      example: { 
+        message: 'Role đã được cập nhật thành công',
+        user: {
+          id: '123e4567-e89b-12d3-a456-426614174000',
+          username: 'username',
+          email: 'user@example.com',
+          role: ['admin']
+        }
+      }
+    }
+  })  
+  async assignRole(@Body() assignRoleDto: AssignRoleDto) {
+    return this.usersService.assignRole(assignRoleDto.userId, assignRoleDto.role);
   }
 }

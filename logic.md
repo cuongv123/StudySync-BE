@@ -6,9 +6,9 @@ Web Study Sync cho phép người dùng (user) tạo nhóm học tập, quản l
 ---
 
 ## 2. Actors
-- **User**: Người dùng chính, có thể tạo nhóm, mời bạn, tham gia nhóm.
+- **User** dùng chính, có thể tạo nhóm, mời bạn, tham gia nhóm.
 - **Admin**: Quản lý hệ thống, có thể quản lý tất cả nhóm và user.
-- **Guest**: Người chưa đăng nhập, chỉ có thể xem thông tin công khai.
+- **Guest**: Người: Người chưa đăng nhập, chỉ có thể xem thông tin công khai.
 
 ---
 
@@ -87,7 +87,7 @@ Web Study Sync cho phép người dùng (user) tạo nhóm học tập, quản l
 
 ## 5. Quy trình tổng thể
 ```mermaid
-flowchart LR
+flowchart 
     A[User đăng nhập] --> B[Tạo nhóm]
     B --> C[Lưu nhóm vào DB]
     C --> D[Mời bạn vào nhóm]
