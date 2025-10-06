@@ -1,4 +1,3 @@
-
 import {
   Controller,
   Get,
@@ -11,7 +10,7 @@ import {
   Put,
 } from '@nestjs/common';
 import { UsersService } from './User.service';
-import { ApiOkResponse, ApiSecurity, ApiTags } from '@nestjs/swagger';
+import { ApiOkResponse, ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { Role } from 'src/common/enums/role.enum';
 import { Roles } from 'src/decorator/roles.decorator';
 import { UpdatePasswordDto } from './dto/update-password';
@@ -22,7 +21,7 @@ import { RolesGuard } from '../auth/guards/RolesGuard';
 
 @Controller('admin')
 @ApiTags('Admin')
-@ApiSecurity('JWT-auth')
+@ApiBearerAuth('JWT-auth')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class AdminUsersController {
   constructor(private readonly usersService: UsersService) {}

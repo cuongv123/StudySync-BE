@@ -6,9 +6,10 @@ import { TokenModule } from './module/token/token.module';
 import { MailModule } from './shared/mail/mail.module';
 import { GroupModule } from './module/group/group.module';
 import { NotificationModule } from './module/notification/notification.module';
+import { TaskModule } from './module/task/task.module';
 
 
 @Module({
-    imports: [UserModule, DatabaseModule, AuthModule, TokenModule, MailModule, GroupModule, NotificationModule],
+    imports: [UserModule, DatabaseModule, AuthModule, TokenModule, MailModule, GroupModule, NotificationModule, TaskModule],
 })
 export class AppModule {}
