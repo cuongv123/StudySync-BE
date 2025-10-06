@@ -19,7 +19,7 @@ import { UpdateTaskStatusDto } from './dto/update-task-status.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt.auth.guard';
 
 @ApiTags('Tasks')
-@ApiBearerAuth()
+@ApiBearerAuth('JWT-auth')
 @Controller('groups/:groupId/tasks')
 @UseGuards(JwtAuthGuard)
 export class TaskController {

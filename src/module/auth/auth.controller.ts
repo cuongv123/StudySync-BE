@@ -65,7 +65,7 @@ export class AuthController {
     return this.authService.refresh(refreshDto);
   }
 
-  @ApiBearerAuth()
+  @ApiBearerAuth('JWT-auth')
   @UseGuards(JwtAuthGuard)
   @Post('logout')
   @ApiOperation({ summary: 'Logout current user' })
