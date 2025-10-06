@@ -252,5 +252,7 @@ Dự án này được phân phối dưới giấy phép [MIT License](LICENSE).
 ---
 
 <p align="center">
-  Made with ❤️ for the student community
+  Made with ❤️ for the student community 
 </p>
+
+THIS FILE CAN BE UPDATE IN THE FUTURE , COMMING SOON !! THANK YOU 
