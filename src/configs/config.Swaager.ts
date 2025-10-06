@@ -13,5 +13,6 @@ export const config = new DocumentBuilder()
       description: 'Enter JWT access token',
       in: 'header',
     },
+    'JWT-auth', // Đặt tên cho security scheme
   )
   .build();
