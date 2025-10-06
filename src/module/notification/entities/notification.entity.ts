@@ -8,7 +8,10 @@ export enum NotificationType {
   MEMBER_JOINED = 'member_joined',
   MEMBER_LEFT = 'member_left',
   MEMBER_REMOVED = 'member_removed',
-  GROUP_UPDATED = 'group_updated'
+  GROUP_UPDATED = 'group_updated',
+  LEADERSHIP_TRANSFERRED = 'leadership_transferred',
+  LEADERSHIP_RECEIVED = 'leadership_received',
+  LEADERSHIP_CHANGED = 'leadership_changed'
 }
 
 @Entity('notifications')

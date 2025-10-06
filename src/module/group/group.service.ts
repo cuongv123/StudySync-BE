@@ -126,42 +126,6 @@ export class GroupService {
   }
 
   // Role Management Methods
-  async transferLeadership(groupId: number, currentLeaderId: string, newLeaderId: string) {
-    // Verify current user is leader
-    const currentLeader = await this.memberRepository.findOne({
-      where: { groupId, userId: currentLeaderId, role: MemberRole.LEADER }
-    });
-
-    if (!currentLeader) {
-      throw new ForbiddenException('Chỉ leader mới có thể chuyển quyền lãnh đạo');
-    }
-
-    // Verify new leader is a member
-    const newLeader = await this.memberRepository.findOne({
-      where: { groupId, userId: newLeaderId }
-    });
-
-    if (!newLeader) {
-      throw new NotFoundException('Người được chỉ định không phải thành viên của nhóm');
-    }
-
-    // Transfer leadership
-    await this.dataSource.transaction(async manager => {
-      // Demote current leader to member
-      await manager.update(GroupMember, 
-        { id: currentLeader.id }, 
-        { role: MemberRole.MEMBER }
-      );
-
-      // Promote new leader
-      await manager.update(GroupMember,
-        { id: newLeader.id },
-        { role: MemberRole.LEADER }
-      );
-    });
-
-    return { message: 'Chuyển quyền lãnh đạo thành công' };
-  }
 
   // Không cần promote/demote methods cho nhóm nhỏ
   // Chỉ có 2 role: Leader và Member
@@ -812,5 +776,138 @@ export class GroupService {
         isLeader: member.user.id === membership.group.leaderId
       }))
     };
+  }
+
+  async transferLeadership(groupId: number, currentLeaderId: string, newLeaderId: string) {
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      // 1. Kiểm tra nhóm tồn tại
+      const group = await queryRunner.manager.findOne(StudyGroup, {
+        where: { id: groupId }
+      });
+
+      if (!group) {
+        throw new NotFoundException('Nhóm không tồn tại');
+      }
+
+      // 2. Kiểm tra người thực hiện có phải leader hiện tại không
+      if (group.leaderId !== currentLeaderId) {
+        throw new ForbiddenException('Chỉ leader hiện tại mới có quyền chuyển giao');
+      }
+
+      // 3. Kiểm tra target member tồn tại trong nhóm
+      const newLeaderMember = await queryRunner.manager.findOne(GroupMember, {
+        where: { 
+          userId: newLeaderId, 
+          groupId: groupId,
+          role: MemberRole.MEMBER // Phải là member, không phải leader
+        },
+        relations: ['user']
+      });
+
+      if (!newLeaderMember) {
+        throw new NotFoundException('Member được chọn không tồn tại trong nhóm hoặc đã là leader');
+      }
+
+      // 4. Không thể tự chuyển giao cho chính mình
+      if (currentLeaderId === newLeaderId) {
+        throw new ForbiddenException('Không thể tự chuyển giao quyền leader cho chính mình');
+      }
+
+      // 5. Cập nhật group leaderId
+      await queryRunner.manager.update(StudyGroup, groupId, {
+        leaderId: newLeaderId
+      });
+
+      // 6. Cập nhật role của leader cũ thành member
+      await queryRunner.manager.update(GroupMember, {
+        userId: currentLeaderId,
+        groupId: groupId
+      }, {
+        role: MemberRole.MEMBER
+      });
+
+      // 7. Cập nhật role của member được chọn thành leader
+      await queryRunner.manager.update(GroupMember, {
+        userId: newLeaderId,
+        groupId: groupId
+      }, {
+        role: MemberRole.LEADER
+      });
+
+      // 8. Lấy thông tin để gửi notification
+      const oldLeader = await this.userRepository.findOne({
+        where: { id: currentLeaderId }
+      });
+      const newLeader = newLeaderMember.user;
+      
+      // Lấy tất cả members để gửi thông báo
+      const allMembers = await queryRunner.manager.find(GroupMember, {
+        where: { groupId: groupId },
+        relations: ['user']
+      });
+
+      await queryRunner.commitTransaction();
+
+      // 9. Gửi notifications (sau khi commit thành công)
+      // Notification cho leader cũ
+      await this.notificationService.createNotification({
+        userId: currentLeaderId,
+        type: NotificationType.LEADERSHIP_TRANSFERRED,
+        title: 'Đã chuyển giao quyền leader',
+        message: `Bạn đã chuyển giao quyền leader của nhóm "${group.groupName}" cho ${newLeader.username}`,
+        groupId: groupId,
+        relatedUserId: newLeaderId.toString()
+      });
+
+      // Notification cho leader mới
+      await this.notificationService.createNotification({
+        userId: newLeaderId,
+        type: NotificationType.LEADERSHIP_RECEIVED,
+        title: 'Được bổ nhiệm làm leader',
+        message: `Bạn đã được ${oldLeader.username} bổ nhiệm làm leader của nhóm "${group.groupName}"`,
+        groupId: groupId,
+        relatedUserId: currentLeaderId
+      });
+
+      // Notification cho tất cả members khác
+      for (const member of allMembers) {
+        const memberId = member.userId;
+        if (memberId !== currentLeaderId && memberId !== newLeaderId) {
+          await this.notificationService.createNotification({
+            userId: memberId,
+            type: NotificationType.LEADERSHIP_CHANGED,
+            title: 'Thay đổi leader nhóm',
+            message: `${oldLeader.username} đã chuyển giao quyền leader cho ${newLeader.username} trong nhóm "${group.groupName}"`,
+            groupId: groupId
+          });
+        }
+      }
+
+      return {
+        message: 'Chuyển giao quyền leader thành công',
+        oldLeader: {
+          id: oldLeader.id,
+          username: oldLeader.username
+        },
+        newLeader: {
+          id: newLeader.id,
+          username: newLeader.username
+        },
+        group: {
+          id: group.id,
+          groupName: group.groupName
+        }
+      };
+
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      throw error;
+    } finally {
+      await queryRunner.release();
+    }
   }
 }
