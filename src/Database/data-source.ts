@@ -3,13 +3,16 @@ import { DataSource } from 'typeorm';
 import { User } from '../module/User/User.entity';
 import * as dotenv from 'dotenv';
 import { Token } from 'src/module/token/token.entity';
-
+import { StudyGroup } from '../module/group/entities/group.entity';
+import { GroupMember } from '../module/group/entities/group-member.entity';
+import { GroupInvitation } from '../module/group/entities/group-invitation.entity';
+import { Notification } from '../module/notification/entities/notification.entity';
 dotenv.config({ path: '.env' });
 
 export const AppDataSource = new DataSource({
   type: 'postgres',
   url: process.env.DATABASE_URL, // sử dụng connection string Supabase
-  entities: [User, Token],
+  entities: [User, Token, StudyGroup, GroupMember, GroupInvitation, Notification], // 
   migrations: [__dirname + '/../migrations/*{.ts,.js}'],
   synchronize: false, // tắt vì bạn dùng migrations
   logging: true,

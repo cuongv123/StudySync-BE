@@ -5,16 +5,18 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
+  OneToMany,
 } from 'typeorm';
-import { Role } from 'src/common/enums/role.enum';
 import { ApiProperty } from '@nestjs/swagger';
+import { Role } from 'src/common/enums/role.enum';
+
 
 @Entity('users')
 export class User {
   @ApiProperty()
   @PrimaryGeneratedColumn('uuid')
   id: string;
-
+  
   @ApiProperty()
   @Column({ unique: true })
   email: string;
@@ -78,5 +80,6 @@ export class User {
 
   @UpdateDateColumn()
   updatedAt: Date;
+
 }
 

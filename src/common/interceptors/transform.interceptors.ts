@@ -26,21 +26,17 @@ export class TransformInterceptor<T>
     next: CallHandler,
   ): Observable<ApiResponse<T>> {
     const ctx = context.switchToHttp();
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const response = ctx.getResponse();
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+   
     const statusCode = response.statusCode;
 
     return next.handle().pipe(
       map((data) => {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+   
         const { message, ...responseData } = data || {};
         return {
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-          data: responseData,
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+          data: responseData,      
           statusCode,
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
           message: message || 'Success',
           timestamp: new Date().toISOString(),
         };

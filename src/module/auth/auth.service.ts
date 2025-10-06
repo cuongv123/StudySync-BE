@@ -11,7 +11,7 @@ import * as bcrypt from 'bcrypt';
 import { randomBytes } from 'crypto';
 import { UsersService } from '../User/User.service';
 import { TokenService } from '../token/token.service';
-import { MailService } from '../mail/mail.service';
+import { MailService } from '../../shared/mail/mail.service';
 import { Role } from 'src/common/enums/role.enum';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
@@ -72,7 +72,6 @@ export class AuthService {
       otpExpiry: otpExpiry,
       isVerified: false,
     });
-    console.log(1);
     // Gửi email verification
     await this.mailService.sendVerificationEmail(
       newUser.email,
