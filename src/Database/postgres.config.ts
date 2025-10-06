@@ -8,6 +8,7 @@ import { GroupMember } from 'src/module/group/entities/group-member.entity';
 import { GroupInvitation } from 'src/module/group/entities/group-invitation.entity';
 import { Notification } from 'src/module/notification/entities/notification.entity'; 
 import { Task } from 'src/module/task/entities/task.entity';
+import { Message } from 'src/module/chat/entities/message.entity';
 
 @Module({
   imports: [
@@ -27,7 +28,7 @@ import { Task } from 'src/module/task/entities/task.entity';
           return {
             type: 'postgres',
             url: databaseUrl,
-            entities: [User, Token, StudyGroup, GroupMember, GroupInvitation, Notification, Task], 
+            entities: [User, Token, StudyGroup, GroupMember, GroupInvitation, Notification, Task, Message], 
             migrations: [__dirname + '/../migrations/*{.ts,.js}'],
             synchronize: false, //  tắt, chỉ dùng migrations
             logging: true,
@@ -47,7 +48,7 @@ import { Task } from 'src/module/task/entities/task.entity';
           username: configService.get<string>('DEV_DB_USERNAME', 'postgres'),
           password: configService.get<string>('DEV_DB_PASSWORD', ''),
           database: configService.get<string>('DEV_DB_DATABASE', 'studysync'),
-          entities: [User, Token, StudyGroup, GroupMember, GroupInvitation, Notification , Task], 
+          entities: [User, Token, StudyGroup, GroupMember, GroupInvitation, Notification, Task, Message], 
           migrations:
             process.env.NODE_ENV === 'production'
               ? ['dist/migrations/*.js']
