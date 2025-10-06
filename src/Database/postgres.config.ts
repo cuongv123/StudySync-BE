@@ -3,6 +3,10 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { User } from 'src/module/User/User.entity';
 import { Token } from 'src/module/token/token.entity';
+import { StudyGroup } from 'src/module/group/entities/group.entity';
+import { GroupMember } from 'src/module/group/entities/group-member.entity';
+import { GroupInvitation } from 'src/module/group/entities/group-invitation.entity';
+import { Notification } from 'src/module/notification/entities/notification.entity'; 
 
 @Module({
   imports: [
@@ -22,9 +26,9 @@ import { Token } from 'src/module/token/token.entity';
           return {
             type: 'postgres',
             url: databaseUrl,
-            entities: [User, Token],
+            entities: [User, Token, StudyGroup, GroupMember, GroupInvitation, Notification], 
             migrations: [__dirname + '/../migrations/*{.ts,.js}'],
-            synchronize: false, // 🚨 tắt, chỉ dùng migrations
+            synchronize: false, //  tắt, chỉ dùng migrations
             logging: true,
             retryAttempts: 5,
             retryDelay: 3000,
@@ -42,7 +46,7 @@ import { Token } from 'src/module/token/token.entity';
           username: configService.get<string>('DEV_DB_USERNAME', 'postgres'),
           password: configService.get<string>('DEV_DB_PASSWORD', ''),
           database: configService.get<string>('DEV_DB_DATABASE', 'studysync'),
-          entities: [User, Token],
+          entities: [User, Token, StudyGroup, GroupMember, GroupInvitation, Notification], 
           migrations:
             process.env.NODE_ENV === 'production'
               ? ['dist/migrations/*.js']

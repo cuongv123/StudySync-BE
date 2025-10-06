@@ -17,9 +17,7 @@ export class MailService {
   async sendVerificationEmail(email: string, otp: string, username: string): Promise<void> {
     const frontendUrl = this.configService.get<string>('FRONTEND_URL');
     const expiryMinutes = this.configService.get<number>('OTP_EXPIRY_MINUTES', 15);
-    console.log(2);
     try {
-      console.log(3);
       await this.mailerService.sendMail({
         to: email,
         subject: '🔐 Verify Your StudySync Account',
@@ -33,10 +31,8 @@ export class MailService {
           year: new Date().getFullYear(),
         },
       });
-      console.log(4);
       this.logger.log(`Verification email sent to ${email}`);
     } catch (error) {
-      console.log(5);
       this.logger.error(`Failed to send verification email to ${email}:`, error);
       throw new Error('Failed to send verification email');
     }

@@ -9,10 +9,9 @@ export const config = new DocumentBuilder()
       type: 'http',
       scheme: 'bearer',
       bearerFormat: 'JWT',
-      name: 'JWT',
+      name: 'Authorization',
       description: 'Enter JWT access token',
-      in: 'headers',
+      in: 'header',
     },
-    'JWT-auth',
   )
   .build();

@@ -7,7 +7,7 @@ import { AuthController } from './auth.controller';
 import { JwtStrategy } from './strategies/jwt.auth.strategies';
 import { UserModule } from '../User/User.module';
 import { TokenModule } from '../token/token.module';
-import { MailModule } from '../mail/mail.module';
+import { MailModule } from '../../shared/mail/mail.module';
 
 @Module({
   imports: [
