@@ -247,7 +247,7 @@ Dự án này được phân phối dưới giấy phép [MIT License](LICENSE).
 
 - Email: support@studysync.com
 - Website: https://studysync.com
-- GitHub: https://github.com/cuongv123/StudySync-BE
+- StudySync BackEnd Team
 
 ---
 
