@@ -11,7 +11,9 @@ export enum NotificationType {
   GROUP_UPDATED = 'group_updated',
   LEADERSHIP_TRANSFERRED = 'leadership_transferred',
   LEADERSHIP_RECEIVED = 'leadership_received',
-  LEADERSHIP_CHANGED = 'leadership_changed'
+  LEADERSHIP_CHANGED = 'leadership_changed',
+  NEW_MESSAGE = 'new_message',
+  MESSAGE_REPLY = 'message_reply'
 }
 
 @Entity('notifications')

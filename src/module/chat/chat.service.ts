@@ -7,6 +7,9 @@ import { GroupMember } from '../group/entities/group-member.entity';
 import { CreateMessageDto } from './dto/create-message.dto';
 import { UpdateMessageDto } from './dto/update-message.dto';
 import { GetMessagesDto } from './dto/get-messages.dto';
+import { NotificationService } from '../notification/notification.service';
+import { NotificationType } from '../notification/entities/notification.entity';
+import { User } from '../User/User.entity';
 
 @Injectable()
 export class ChatService {
@@ -17,6 +20,9 @@ export class ChatService {
     private groupRepository: Repository<StudyGroup>,
     @InjectRepository(GroupMember)
     private groupMemberRepository: Repository<GroupMember>,
+    @InjectRepository(User)
+    private userRepository: Repository<User>,
+    private notificationService: NotificationService,
   ) {}
 
   // Helper: Kiểm tra user có phải thành viên nhóm không
@@ -66,7 +72,12 @@ export class ChatService {
       senderId: userId,
     });
 
-    return await this.messageRepository.save(message);
+    const savedMessage = await this.messageRepository.save(message);
+
+    // Gửi chat notifications cho tất cả members (trừ người gửi)
+    await this.sendChatNotifications(userId, groupId, savedMessage, createMessageDto.replyToId);
+
+    return savedMessage;
   }
 
   // Lấy lịch sử tin nhắn với pagination
@@ -228,5 +239,52 @@ export class ChatService {
     // TODO: Implement read receipts tracking
     // Hiện tại return 0, có thể mở rộng sau với bảng message_reads
     return 0;
+  }
+
+  // Gửi chat notifications cho tất cả members trong group (trừ người gửi)
+  private async sendChatNotifications(
+    senderId: string, 
+    groupId: number, 
+    message: Message, 
+    replyToId?: number
+  ): Promise<void> {
+    try {
+      // Lấy thông tin group và sender
+      const [group, sender] = await Promise.all([
+        this.groupRepository.findOne({ where: { id: groupId } }),
+        this.userRepository.findOne({ where: { id: senderId } })
+      ]);
+
+      if (!group || !sender) return;
+
+      // Lấy tất cả members trong group (trừ người gửi)
+      const groupMembers = await this.groupMemberRepository.find({
+        where: { groupId },
+        relations: ['user']
+      });
+
+      const recipientMembers = groupMembers.filter(member => member.userId !== senderId);
+
+      // Gửi notification cho từng member
+      for (const member of recipientMembers) {
+        const notificationType = replyToId ? NotificationType.MESSAGE_REPLY : NotificationType.NEW_MESSAGE;
+        const title = replyToId ? 'Tin nhắn trả lời mới' : 'Tin nhắn mới';
+        const content = replyToId 
+          ? `${sender.username} đã trả lời tin nhắn trong nhóm "${group.groupName}": ${message.content.substring(0, 50)}...`
+          : `${sender.username} đã gửi tin nhắn trong nhóm "${group.groupName}": ${message.content.substring(0, 50)}...`;
+
+        await this.notificationService.createNotification({
+          userId: member.userId,
+          type: notificationType,
+          title,
+          message: content,
+          groupId: groupId,
+          relatedUserId: senderId
+        });
+      }
+    } catch (error) {
+      console.error('Error sending chat notifications:', error);
+      // Không throw lỗi để không ảnh hưởng đến việc gửi tin nhắn chính
+    }
   }
 }
