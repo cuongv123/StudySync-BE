@@ -60,6 +60,42 @@ export class NotificationController {
     return this.notificationService.markAllAsRead(req.user.id);
   }
 
+  @Get('chat')
+  @ApiOperation({ summary: 'Lấy danh sách chat notifications  💬' })
+  @ApiQuery({ name: 'page', required: false, type: Number })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiQuery({ name: 'isRead', required: false, type: Boolean })
+  async getChatNotifications(
+    @Request() req: any,
+    @Query() query: GetNotificationsDto
+  ) {
+    return this.notificationService.getChatNotifications(req.user.id, query);
+  }
+
+  @Get('system')
+  @ApiOperation({ summary: 'Lấy danh sách system notifications  🔔' })
+  @ApiQuery({ name: 'page', required: false, type: Number })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiQuery({ name: 'isRead', required: false, type: Boolean })
+  async getSystemNotifications(
+    @Request() req: any,
+    @Query() query: GetNotificationsDto
+  ) {
+    return this.notificationService.getSystemNotifications(req.user.id, query);
+  }
+
+  @Get('chat/unread-count')
+  @ApiOperation({ summary: 'Số chat notifications chưa đọc ' })
+  async getChatUnreadCount(@Request() req: any) {
+    return this.notificationService.getChatUnreadCount(req.user.id);
+  }
+
+  @Get('system/unread-count')
+  @ApiOperation({ summary: 'Số system notifications chưa đọc ' })
+  async getSystemUnreadCount(@Request() req: any) {
+    return this.notificationService.getSystemUnreadCount(req.user.id);
+  }
+
   @Delete(':id')
   @ApiOperation({ summary: 'Xóa thông báo' })
   async deleteNotification(

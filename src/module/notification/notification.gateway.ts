@@ -157,6 +157,19 @@ export class NotificationGateway implements OnGatewayConnection, OnGatewayDiscon
     this.logger.log(`Emitted ${event} to ${userIds.length} users`);
   }
 
+  // Facebook-style separate notifications
+  // Method to emit chat message notification
+  async emitChatNotification(userId: string, data: any) {
+    this.server.to(`user_${userId}`).emit('new_chat_message', data);
+    this.logger.log(`Emitted new_chat_message to user ${userId}`);
+  }
+
+  // Method to emit system notification  
+  async emitSystemNotification(userId: string, data: any) {
+    this.server.to(`user_${userId}`).emit('new_system_notification', data);
+    this.logger.log(`Emitted new_system_notification to user ${userId}`);
+  }
+
   // Check if user is connected
   isUserConnected(userId: string): boolean {
     return this.connectedUsers.has(userId);

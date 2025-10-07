@@ -6,10 +6,13 @@ import { ChatGateway } from './chat.gateway';
 import { Message } from './entities/message.entity';
 import { StudyGroup } from '../group/entities/group.entity';
 import { GroupMember } from '../group/entities/group-member.entity';
+import { User } from '../User/User.entity';
+import { NotificationModule } from '../notification/notification.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Message, StudyGroup, GroupMember]),
+    TypeOrmModule.forFeature([Message, StudyGroup, GroupMember, User]),
+    NotificationModule,
   ],
   controllers: [ChatController],
   providers: [ChatService, ChatGateway],

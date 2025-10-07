@@ -27,23 +27,27 @@ export class NotificationService {
 
     const savedNotification = await this.notificationRepository.save(notification);
 
-    // Emit real-time notification
+    // Emit real-time notification với separate events cho chat vs system
     if (savedNotification && this.notificationGateway) {
       try {
-        await this.notificationGateway.emitToUser(
-          savedNotification.userId,
-          'new_notification',
-          {
-            id: savedNotification.id,
-            type: savedNotification.type,
-            title: savedNotification.title,
-            content: savedNotification.content,
-            relatedId: savedNotification.relatedId,
-            relatedType: savedNotification.relatedType,
-            isRead: savedNotification.isRead,
-            createdAt: savedNotification.createdAt,
-          }
-        );
+        const notificationData = {
+          id: savedNotification.id,
+          type: savedNotification.type,
+          title: savedNotification.title,
+          content: savedNotification.content,
+          relatedId: savedNotification.relatedId,
+          relatedType: savedNotification.relatedType,
+          isRead: savedNotification.isRead,
+          createdAt: savedNotification.createdAt,
+        };
+
+        // Phân biệt chat notifications vs system notifications
+        const chatNotificationTypes = [NotificationType.NEW_MESSAGE, NotificationType.MESSAGE_REPLY];
+        if (chatNotificationTypes.includes(savedNotification.type as NotificationType)) {
+          await this.notificationGateway.emitChatNotification(savedNotification.userId, notificationData);
+        } else {
+          await this.notificationGateway.emitSystemNotification(savedNotification.userId, notificationData);
+        }
       } catch (error) {
         console.error('Failed to emit real-time notification:', error);
         // Don't throw error as notification is already saved
@@ -267,5 +271,110 @@ export class NotificationService {
       }
     }
     return notifications;
+  }
+
+  // Facebook-style separate notification methods
+  async getChatNotifications(userId: string, query: GetNotificationsDto): Promise<ApiResponse<any>> {
+    const { page = 1, limit = 10, isRead } = query;
+    const skip = (page - 1) * limit;
+
+    const chatTypes = [NotificationType.NEW_MESSAGE, NotificationType.MESSAGE_REPLY];
+    
+    const whereCondition: any = {
+      userId,
+      type: In(chatTypes),
+    };
+
+    if (typeof isRead === 'boolean') {
+      whereCondition.isRead = isRead;
+    }
+
+    const [notifications, total] = await this.notificationRepository.findAndCount({
+      where: whereCondition,
+      order: { createdAt: 'DESC' },
+      skip,
+      take: limit,
+    });
+
+    return {
+      data: {
+        notifications,
+        pagination: {
+          total,
+          page,
+          limit,
+          totalPages: Math.ceil(total / limit),
+        },
+      },
+      statusCode: 200,
+      message: 'Lấy danh sách chat notifications thành công',
+      timestamp: new Date().toISOString(),
+    };
+  }
+
+  async getSystemNotifications(userId: string, query: GetNotificationsDto): Promise<ApiResponse<any>> {
+    const { page = 1, limit = 10, isRead } = query;
+    const skip = (page - 1) * limit;
+
+    const chatTypes = [NotificationType.NEW_MESSAGE, NotificationType.MESSAGE_REPLY];
+    
+    const whereCondition: any = {
+      userId,
+      type: In(Object.values(NotificationType).filter(type => !chatTypes.includes(type as NotificationType))),
+    };
+
+    if (typeof isRead === 'boolean') {
+      whereCondition.isRead = isRead;
+    }
+
+    const [notifications, total] = await this.notificationRepository.findAndCount({
+      where: whereCondition,
+      order: { createdAt: 'DESC' },
+      skip,
+      take: limit,
+    });
+
+    return {
+      data: {
+        notifications,
+        pagination: {
+          total,
+          page,
+          limit,
+          totalPages: Math.ceil(total / limit),
+        },
+      },
+      statusCode: 200,
+      message: 'Lấy danh sách system notifications thành công',
+      timestamp: new Date().toISOString(),
+    };
+  }
+
+  async getChatUnreadCount(userId: string): Promise<{ count: number }> {
+    const chatTypes = [NotificationType.NEW_MESSAGE, NotificationType.MESSAGE_REPLY];
+    
+    const count = await this.notificationRepository.count({
+      where: {
+        userId,
+        isRead: false,
+        type: In(chatTypes),
+      },
+    });
+
+    return { count };
+  }
+
+  async getSystemUnreadCount(userId: string): Promise<{ count: number }> {
+    const chatTypes = [NotificationType.NEW_MESSAGE, NotificationType.MESSAGE_REPLY];
+    
+    const count = await this.notificationRepository.count({
+      where: {
+        userId,
+        isRead: false,
+        type: In(Object.values(NotificationType).filter(type => !chatTypes.includes(type as NotificationType))),
+      },
+    });
+
+    return { count };
   }
 }
