@@ -12,6 +12,8 @@ import { Message } from 'src/module/chat/entities/message.entity';
 import { File as FileEntity } from 'src/module/file/entities/file.entity';
 import { UserStorage } from 'src/module/file/entities/user-storage.entity';
 import { GroupStorage } from 'src/module/file/entities/group-storage.entity';
+import { VideoCall } from 'src/module/video-call/entities/video-call.entity';
+import { CallParticipant } from 'src/module/video-call/entities/call-participant.entity';
 
 @Module({
   imports: [
@@ -31,7 +33,7 @@ import { GroupStorage } from 'src/module/file/entities/group-storage.entity';
           return {
             type: 'postgres',
             url: databaseUrl,
-            entities: [User, Token, StudyGroup, GroupMember, GroupInvitation, Notification, Task, Message, FileEntity, UserStorage, GroupStorage], 
+            entities: [User, Token, StudyGroup, GroupMember, GroupInvitation, Notification, Task, Message, FileEntity, UserStorage, GroupStorage, VideoCall, CallParticipant], 
             migrations: [__dirname + '/../migrations/*{.ts,.js}'],
             synchronize: false, //  tắt, chỉ dùng migrations
             logging: true,
@@ -51,7 +53,7 @@ import { GroupStorage } from 'src/module/file/entities/group-storage.entity';
           username: configService.get<string>('DEV_DB_USERNAME', 'postgres'),
           password: configService.get<string>('DEV_DB_PASSWORD', ''),
           database: configService.get<string>('DEV_DB_DATABASE', 'studysync'),
-          entities: [User, Token, StudyGroup, GroupMember, GroupInvitation, Notification, Task, Message, FileEntity, UserStorage, GroupStorage], 
+          entities: [User, Token, StudyGroup, GroupMember, GroupInvitation, Notification, Task, Message, FileEntity, UserStorage, GroupStorage, VideoCall, CallParticipant], 
           migrations:
             process.env.NODE_ENV === 'production'
               ? ['dist/migrations/*.js']
