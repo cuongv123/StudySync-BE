@@ -8,9 +8,10 @@ import { GroupModule } from './module/group/group.module';
 import { NotificationModule } from './module/notification/notification.module';
 import { TaskModule } from './module/task/task.module';
 import { ChatModule } from './module/chat/chat.module';
+import { FileModule } from './module/file/file.module';
 
 
 @Module({
-    imports: [UserModule, DatabaseModule, AuthModule, TokenModule, MailModule, GroupModule, NotificationModule, TaskModule, ChatModule],
+    imports: [UserModule, DatabaseModule, AuthModule, TokenModule, MailModule, GroupModule, NotificationModule, TaskModule, ChatModule, FileModule],
 })
 export class AppModule {}
