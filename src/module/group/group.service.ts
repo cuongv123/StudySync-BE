@@ -6,7 +6,7 @@ import { GroupMember, MemberRole } from './entities/group-member.entity';
 import { GroupInvitation, InvitationStatus } from './entities/group-invitation.entity';
 import { CreateGroupDto } from './dto/create-group.dto';
 import { UpdateGroupDto } from './dto/update-group.dto';
-import { User } from '../User/User.entity';
+import { User } from '../User/entities/User.entity';
 import { NotificationService } from '../notification/notification.service';
 import { NotificationType } from '../notification/entities/notification.entity';
 
@@ -105,26 +105,7 @@ export class GroupService {
     return { message: 'Xóa nhóm thành công' };
   }
 
-  async ensureTestUser() {
-    // Tìm user test hoặc tạo mới
-    let existingUser = await this.userRepository.findOne({ 
-      where: { email: 'test@example.com' } 
-    });
-    
-    if (!existingUser) {
-      const testUser = this.userRepository.create({
-        email: 'test@example.com',
-        username: 'testuser',
-        password: 'hashedpassword',
-        isVerified: true,
-      });
-      
-      existingUser = await this.userRepository.save(testUser);
-    }
-    
-    return existingUser.id; // Trả về UUID thực
-  }
-
+  // =================== ROLE & MEMBER MANAGEMENT ===================
   // Role Management Methods
 
   // Không cần promote/demote methods cho nhóm nhỏ

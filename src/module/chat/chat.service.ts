@@ -9,7 +9,7 @@ import { UpdateMessageDto } from './dto/update-message.dto';
 import { GetMessagesDto } from './dto/get-messages.dto';
 import { NotificationService } from '../notification/notification.service';
 import { NotificationType } from '../notification/entities/notification.entity';
-import { User } from '../User/User.entity';
+import { User } from '../User/entities/User.entity';
 
 @Injectable()
 export class ChatService {

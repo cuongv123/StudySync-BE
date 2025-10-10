@@ -155,7 +155,7 @@ export class GroupController {
     @Param('userId') userId: string,
     @Request() req: any
   ) {
-    return this.groupService.removeMember(groupId, userId, req.user.id);
+    return this.groupService.removeMember(groupId,req.user.id,userId);
   }
 
   @Post(':id/transfer-leadership')

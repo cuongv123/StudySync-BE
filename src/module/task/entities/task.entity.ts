@@ -8,7 +8,7 @@ import {
   JoinColumn,
 } from 'typeorm';
 import { StudyGroup } from '../../group/entities/group.entity';
-import { User } from '../../User/User.entity';
+import { User } from '../../User/entities/User.entity';
 import { TaskStatus, TaskPriority } from '../../../common/enums/task-status.enum';
 
 @Entity('tasks')

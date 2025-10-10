@@ -7,7 +7,7 @@ import {
   ManyToOne,
   JoinColumn,
 } from 'typeorm';
-import { User } from '../../User/User.entity';
+import { User } from '../../User/entities/User.entity';
 import { StudyGroup } from './group.entity';
 
 export enum InvitationStatus {

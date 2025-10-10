@@ -1,5 +1,5 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
-import { User } from '../../User/User.entity';
+import { User } from '../../User/entities/User.entity';
 import { StudyGroup } from '../../group/entities/group.entity';
 
 export enum NotificationType {

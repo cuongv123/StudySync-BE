@@ -5,7 +5,7 @@ import { GroupService } from './group.service';
 import { StudyGroup } from './entities/group.entity';
 import { GroupMember } from './entities/group-member.entity';
 import { GroupInvitation } from './entities/group-invitation.entity';
-import { User } from '../User/User.entity';
+import { User } from '../User/entities/User.entity';
 import { NotificationModule } from '../notification/notification.module';
 
 @Module({
