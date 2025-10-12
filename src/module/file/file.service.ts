@@ -354,9 +354,10 @@ export class FileService {
         await this.userStorageRepository.save(storage);
       }
 
-      if (storage.usedSpace + fileSize > storage.maxSpace) {
+      const availableSpace = storage.maxSpace - storage.usedSpace;
+      if (fileSize > availableSpace) {
         throw new BadRequestException(
-          `Not enough storage space. Available: ${this.formatBytes(storage.availableSpace)}`,
+          `Not enough storage space. Available: ${this.formatBytes(availableSpace)}`,
         );
       }
     } else {
@@ -377,9 +378,10 @@ export class FileService {
         await this.groupStorageRepository.save(storage);
       }
 
-      if (storage.usedSpace + fileSize > storage.maxSpace) {
+      const availableSpace = storage.maxSpace - storage.usedSpace;
+      if (fileSize > availableSpace) {
         throw new BadRequestException(
-          `Not enough group storage space. Available: ${this.formatBytes(storage.availableSpace)}`,
+          `Not enough group storage space. Available: ${this.formatBytes(availableSpace)}`,
         );
       }
     }

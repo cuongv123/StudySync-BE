@@ -29,7 +29,7 @@ export class UsersController {
   @Roles(Role.USER)
   @ApiOkResponse({ schema: { example: { message: 'Password successfully updated' }}})
   async updatePassword(@Req() req, @Body() dto: UpdatePasswordDto) {
-    const userId = (req.user as any).sub;
+    const userId = req.user.id;
     return this.usersService.updatePassword(userId, dto);
   }
 
@@ -54,7 +54,7 @@ export class UsersController {
     }
   })
   async getProfile(@Req() req: any) {
-    const userId = (req.user as any).sub;
+    const userId = req.user.id;
     const user = await this.usersService.findOne(userId);
     const { password, tokenOTP, otpExpiry, ...userResponse } = user;
     return userResponse;
@@ -81,7 +81,7 @@ export class UsersController {
     }
   })
   async updateProfile(@Req() req: any, @Body() updateProfileDto: UpdateProfileDto) {
-    const userId = (req.user as any).sub;
+    const userId = req.user.id;
     return this.usersService.updateUserProfile(userId, updateProfileDto);
   }
 }
