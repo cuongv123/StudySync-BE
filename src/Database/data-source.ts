@@ -9,13 +9,16 @@ import { GroupInvitation } from '../module/group/entities/group-invitation.entit
 import { Notification } from '../module/notification/entities/notification.entity';
 import { Task } from 'src/module/task/entities/task.entity';
 import { Message } from 'src/module/chat/entities/message.entity';
+import { File } from '../module/file/entities/file.entity';
+import { UserStorage } from '../module/file/entities/user-storage.entity';
+import { GroupStorage } from '../module/file/entities/group-storage.entity';
 dotenv.config({ path: '.env' });
 
 export const AppDataSource = new DataSource({
   type: 'postgres',
   url: process.env.DATABASE_URL, // sử dụng connection string Supabase
-  entities: [User, Token, StudyGroup, GroupMember, GroupInvitation, Notification, Task, Message], // 
-  migrations: [__dirname + '/../migrations/*{.ts,.js}'],
+  entities: [User, Token, StudyGroup, GroupMember, GroupInvitation, Notification, Task, Message, File, UserStorage, GroupStorage], // 
+  migrations: [__dirname + '/migrations/*{.ts,.js}'],
   synchronize: false, // tắt vì bạn dùng migrations
   logging: true,
   ssl: {
