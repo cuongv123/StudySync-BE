@@ -6,7 +6,7 @@ import {
   JoinColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { User } from '../../User/User.entity';
+import { User } from '../../User/entities/User.entity';
 
 @Entity('user_storage')
 export class UserStorage {

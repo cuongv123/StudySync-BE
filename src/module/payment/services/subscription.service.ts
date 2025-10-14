@@ -4,7 +4,7 @@ import { Repository } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
 
 import { SubscriptionPlan } from '../entities/subscription-plan.entity';
-import { UserSubscription } from '../entities/user-subscription.entity';
+import { UserSubscription } from '.././entities/user-subscription.entity';
 import { WalletService } from './wallet.service';
 
 @Injectable()
@@ -49,10 +49,32 @@ export class SubscriptionService {
    * Get user's current subscription
    */
   async getUserSubscription(userId: string): Promise<UserSubscription | null> {
-    return await this.subscriptionRepository.findOne({
+    const subscription = await this.subscriptionRepository.findOne({
       where: { userId, isActive: true },
       relations: ['plan'],
     });
+    if (subscription) return subscription;
+
+    // If no subscription, return a mock object for free plan
+    const freePlan = await this.planRepository.findOne({ where: { planName: 'free', isActive: true } });
+    if (!freePlan) return null;
+    return {
+      id: 0,
+      userId,
+      planId: freePlan.id,
+      plan: freePlan,
+      startDate: null,
+      endDate: null,
+      isActive: true,
+      autoRenew: false,
+      usagePersonalStorageMb: 0,
+      usageVideoMinutes: 0,
+      usageAiQueries: 0,
+      lastResetDate: null,
+      purchasedFromWallet: false,
+      createdAt: null,
+      // ...other fields as needed
+    } as any;
   }
 
   /**

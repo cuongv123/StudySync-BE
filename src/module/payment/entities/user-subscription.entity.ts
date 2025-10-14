@@ -8,7 +8,7 @@ import {
   JoinColumn,
 } from 'typeorm';
 import { User } from '../../User/entities/User.entity';
-import { SubscriptionPlan } from './subscription-plan.entity';
+import { SubscriptionPlan } from '../../payment/entities/subscription-plan.entity';
 
 export enum SubscriptionStatus {
   ACTIVE = 'active',

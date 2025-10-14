@@ -9,12 +9,11 @@ import { UserSubscription } from './entities/user-subscription.entity';
 import { Payment } from './entities/payment.entity';
 import { WalletService } from './services/wallet.service';
 import { PaymentAttemptService } from './services/payment-attempt.service';
-import { VNPayService } from './services/vnpay.service';
-import { MoMoService } from './services/momo.service';
-import { ZaloPayService } from './services/zalopay.service';
+import { SepayService } from './services/sepay.service';
 import { PaymentGatewayService } from './services/payment-gateway.service';
 import { SubscriptionService } from './services/subscription.service';
-import { PaymentController } from './payment.controller';
+import { PaymentGatewayController } from './payment-gateway.controller';
+import { SubscriptionController } from './subscription.controller';
 import { JwtStrategy } from '../auth/strategies/jwt.auth.strategies';
 
 @Module({
@@ -29,23 +28,19 @@ import { JwtStrategy } from '../auth/strategies/jwt.auth.strategies';
     ]),
     PassportModule.register({ defaultStrategy: 'jwt' }),
   ],
-  controllers: [PaymentController],
+  controllers: [PaymentGatewayController, SubscriptionController],
   providers: [
     JwtStrategy,
     WalletService,
     PaymentAttemptService,
-    VNPayService,
-    MoMoService,
-    ZaloPayService,
+    SepayService,
     PaymentGatewayService,
     SubscriptionService,
   ],
   exports: [
     WalletService,
     PaymentAttemptService,
-    VNPayService,
-    MoMoService,
-    ZaloPayService,
+    SepayService,
     PaymentGatewayService,
     SubscriptionService,
     TypeOrmModule,

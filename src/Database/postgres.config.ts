@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+﻿import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { User } from 'src/module/User/entities/User.entity';
@@ -6,10 +6,9 @@ import { Token } from 'src/module/token/token.entity';
 import { StudyGroup } from 'src/module/group/entities/group.entity';
 import { GroupMember } from 'src/module/group/entities/group-member.entity';
 import { GroupInvitation } from 'src/module/group/entities/group-invitation.entity';
-import { Notification } from 'src/module/notification/entities/notification.entity'; 
+import { Notification } from 'src/module/notification/entities/notification.entity';
 import { Task } from 'src/module/task/entities/task.entity';
 import { Message } from 'src/module/chat/entities/message.entity';
-<<<<<<< HEAD
 // Payment entities
 import { UserWallet } from 'src/module/payment/entities/user-wallet.entity';
 import { WalletTransaction } from 'src/module/payment/entities/wallet-transaction.entity';
@@ -17,13 +16,11 @@ import { PaymentAttempt } from 'src/module/payment/entities/payment-attempt.enti
 import { SubscriptionPlan } from 'src/module/payment/entities/subscription-plan.entity';
 import { UserSubscription } from 'src/module/payment/entities/user-subscription.entity';
 import { Payment } from 'src/module/payment/entities/payment.entity';
-=======
 import { File as FileEntity } from 'src/module/file/entities/file.entity';
 import { UserStorage } from 'src/module/file/entities/user-storage.entity';
 import { GroupStorage } from 'src/module/file/entities/group-storage.entity';
 import { VideoCall } from 'src/module/video-call/entities/video-call.entity';
 import { CallParticipant } from 'src/module/video-call/entities/call-participant.entity';
->>>>>>> main
 
 @Module({
   imports: [
@@ -43,11 +40,7 @@ import { CallParticipant } from 'src/module/video-call/entities/call-participant
           return {
             type: 'postgres',
             url: databaseUrl,
-<<<<<<< HEAD
-            entities: [User, Token, StudyGroup, GroupMember, GroupInvitation, Notification, Task, Message, UserWallet, WalletTransaction, PaymentAttempt, SubscriptionPlan, UserSubscription, Payment], 
-=======
-            entities: [User, Token, StudyGroup, GroupMember, GroupInvitation, Notification, Task, Message, FileEntity, UserStorage, GroupStorage, VideoCall, CallParticipant], 
->>>>>>> main
+            entities: [User, Token, StudyGroup, GroupMember, GroupInvitation, Notification, Task, Message, UserWallet, WalletTransaction, PaymentAttempt, SubscriptionPlan, UserSubscription, Payment, FileEntity, UserStorage, GroupStorage, VideoCall, CallParticipant],
             migrations: [__dirname + '/../migrations/*{.ts,.js}'],
             synchronize: false, // ✅ An toàn - không động Supabase
             logging: ['query', 'error'],
@@ -67,7 +60,7 @@ import { CallParticipant } from 'src/module/video-call/entities/call-participant
           username: configService.get<string>('DEV_DB_USERNAME', 'postgres'),
           password: configService.get<string>('DEV_DB_PASSWORD', ''),
           database: configService.get<string>('DEV_DB_DATABASE', 'studysync'),
-          entities: [User, Token, StudyGroup, GroupMember, GroupInvitation, Notification, Task, Message, FileEntity, UserStorage, GroupStorage, VideoCall, CallParticipant], 
+          entities: [User, Token, StudyGroup, GroupMember, GroupInvitation, Notification, Task, Message, UserWallet, WalletTransaction, PaymentAttempt, SubscriptionPlan, UserSubscription, Payment, FileEntity, UserStorage, GroupStorage, VideoCall, CallParticipant],
           migrations:
             process.env.NODE_ENV === 'production'
               ? ['dist/migrations/*.js']

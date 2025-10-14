@@ -8,7 +8,7 @@ import {
   UpdateDateColumn,
   OneToMany,
 } from 'typeorm';
-import { User } from '../../User/User.entity';
+import { User } from '../../User/entities/User.entity';
 import { StudyGroup } from '../../group/entities/group.entity';
 import { FileType } from '../../../common/enums/file-type.enum';
 

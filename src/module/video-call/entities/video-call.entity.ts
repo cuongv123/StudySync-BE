@@ -8,7 +8,7 @@ import {
   UpdateDateColumn,
   JoinColumn,
 } from 'typeorm';
-import { User } from '../../User/User.entity';
+import { User } from '../../User/entities/User.entity';
 import { StudyGroup } from '../../group/entities/group.entity';
 import { CallParticipant } from './call-participant.entity';
 import { CallStatus } from '../../../common/enums/call-status.enum';

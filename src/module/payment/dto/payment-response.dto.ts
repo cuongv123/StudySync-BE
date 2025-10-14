@@ -13,8 +13,6 @@ export class PaymentResponseDto {
   @ApiProperty({ description: 'Gateway name' })
   gateway: string;
 
-  @ApiProperty({ description: 'Expiry time' })
-  expiresAt: Date;
 }
 
 export class WalletBalanceDto {
