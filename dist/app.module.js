@@ -21,12 +21,13 @@ const subscription_module_1 = require("./module/subscription/subscription.module
 const payment_module_1 = require("./module/payment/payment.module");
 const file_module_1 = require("./module/file/file.module");
 const video_call_module_1 = require("./module/video-call/video-call.module");
+const ai_chat_module_1 = require("./module/ai-chat/ai-chat.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
 exports.AppModule = AppModule = __decorate([
     (0, common_1.Module)({
-        imports: [User_module_1.UserModule, postgres_config_1.DatabaseModule, auth_module_1.AuthModule, token_module_1.TokenModule, mail_module_1.MailModule, group_module_1.GroupModule, notification_module_1.NotificationModule, task_module_1.TaskModule, chat_module_1.ChatModule, subscription_module_1.SubscriptionModule, payment_module_1.PaymentModule, file_module_1.FileModule, video_call_module_1.VideoCallModule],
+        imports: [User_module_1.UserModule, postgres_config_1.DatabaseModule, auth_module_1.AuthModule, token_module_1.TokenModule, mail_module_1.MailModule, group_module_1.GroupModule, notification_module_1.NotificationModule, task_module_1.TaskModule, chat_module_1.ChatModule, subscription_module_1.SubscriptionModule, payment_module_1.PaymentModule, file_module_1.FileModule, video_call_module_1.VideoCallModule, ai_chat_module_1.AiChatModule],
     })
 ], AppModule);
 //# sourceMappingURL=app.module.js.map
