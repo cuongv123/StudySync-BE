@@ -176,13 +176,48 @@ let PaymentService = PaymentService_1 = class PaymentService {
     }
     async getPaymentByOrderCode(orderCode) {
         const payment = await this.paymentRepository.findOne({
-            where: { orderCode },
-            relations: ['plan', 'user'],
+            where: { orderCode: orderCode },
+            relations: ['plan'],
         });
         if (!payment) {
             throw new common_1.NotFoundException('Payment not found');
         }
         return payment;
+    }
+    async getPayOSTransactionInfo(orderCode) {
+        var _a;
+        try {
+            this.logger.log(`Fetching transaction info from PayOS for order: ${orderCode}`);
+            const payosInfo = await this.payosService.getPaymentInfo(orderCode);
+            const payment = await this.paymentRepository.findOne({
+                where: { orderCode: orderCode },
+                relations: ['plan'],
+            });
+            return {
+                orderCode: payosInfo.orderCode,
+                amount: payosInfo.amount,
+                description: payosInfo.description,
+                status: payosInfo.status,
+                currency: payosInfo.currency || 'VND',
+                paymentLinkId: payosInfo.paymentLinkId,
+                checkoutUrl: payosInfo.checkoutUrl,
+                qrCode: payosInfo.qrCode,
+                transactions: payosInfo.transactions || [],
+                paymentRecord: payment ? {
+                    id: payment.id,
+                    userId: payment.userId,
+                    planId: payment.planId,
+                    planName: (_a = payment.plan) === null || _a === void 0 ? void 0 : _a.planName,
+                    status: payment.status,
+                    paidAt: payment.paidAt,
+                    createdAt: payment.createdAt,
+                } : null,
+            };
+        }
+        catch (error) {
+            this.logger.error(`Failed to get transaction info: ${error.message}`);
+            throw new common_1.NotFoundException(`Transaction not found: ${error.message}`);
+        }
     }
     async verifyWebhookSignature(webhookData) {
         try {

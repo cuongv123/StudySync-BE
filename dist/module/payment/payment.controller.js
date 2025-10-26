@@ -85,6 +85,21 @@ let PaymentController = PaymentController_1 = class PaymentController {
             timestamp: new Date().toISOString(),
         };
     }
+    async getTransactionDetails(req, orderCode) {
+        try {
+            const transactionInfo = await this.paymentService.getPayOSTransactionInfo(orderCode);
+            return {
+                data: transactionInfo,
+                statusCode: 200,
+                message: 'Transaction details retrieved successfully',
+                timestamp: new Date().toISOString(),
+            };
+        }
+        catch (error) {
+            this.logger.error('Get transaction error:', error.message);
+            throw new common_1.BadRequestException(error.message);
+        }
+    }
 };
 exports.PaymentController = PaymentController;
 __decorate([
@@ -132,6 +147,18 @@ __decorate([
     __metadata("design:paramtypes", [Object, String]),
     __metadata("design:returntype", Promise)
 ], PaymentController.prototype, "getPaymentByOrderCode", null);
+__decorate([
+    (0, common_1.Get)('transaction/:orderCode'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, swagger_1.ApiBearerAuth)('JWT-auth'),
+    (0, swagger_1.ApiOperation)({ summary: 'Get transaction details from PayOS' }),
+    (0, swagger_1.ApiResponse)({ status: 200, description: 'Returns full transaction info from PayOS gateway' }),
+    __param(0, (0, common_1.Request)()),
+    __param(1, (0, common_1.Query)('orderCode')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, String]),
+    __metadata("design:returntype", Promise)
+], PaymentController.prototype, "getTransactionDetails", null);
 exports.PaymentController = PaymentController = PaymentController_1 = __decorate([
     (0, swagger_1.ApiTags)('Payments'),
     (0, common_1.Controller)('payments'),

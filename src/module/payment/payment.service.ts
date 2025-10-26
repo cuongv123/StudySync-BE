@@ -237,8 +237,8 @@ export class PaymentService {
    */
   async getPaymentByOrderCode(orderCode: string) {
     const payment = await this.paymentRepository.findOne({
-      where: { orderCode },
-      relations: ['plan', 'user'],
+      where: { orderCode: orderCode },
+      relations: ['plan'],
     });
 
     if (!payment) {
@@ -246,6 +246,54 @@ export class PaymentService {
     }
 
     return payment;
+  }
+
+  /**
+   * Get full transaction info from PayOS
+   * Returns complete transaction details including bank info, reference, etc.
+   */
+  async getPayOSTransactionInfo(orderCode: string) {
+    try {
+      this.logger.log(`Fetching transaction info from PayOS for order: ${orderCode}`);
+      
+      // Get transaction info from PayOS
+      const payosInfo = await this.payosService.getPaymentInfo(orderCode);
+      
+      // Get payment record from database
+      const payment = await this.paymentRepository.findOne({
+        where: { orderCode: orderCode },
+        relations: ['plan'],
+      });
+
+      return {
+        // PayOS transaction info
+        orderCode: payosInfo.orderCode,
+        amount: payosInfo.amount,
+        description: payosInfo.description,
+        status: payosInfo.status,
+        currency: payosInfo.currency || 'VND',
+        paymentLinkId: payosInfo.paymentLinkId,
+        checkoutUrl: payosInfo.checkoutUrl,
+        qrCode: payosInfo.qrCode,
+        
+        // Transaction details (if paid)
+        transactions: payosInfo.transactions || [],
+        
+        // Database payment info
+        paymentRecord: payment ? {
+          id: payment.id,
+          userId: payment.userId,
+          planId: payment.planId,
+          planName: payment.plan?.planName,
+          status: payment.status,
+          paidAt: payment.paidAt,
+          createdAt: payment.createdAt,
+        } : null,
+      };
+    } catch (error: any) {
+      this.logger.error(`Failed to get transaction info: ${error.message}`);
+      throw new NotFoundException(`Transaction not found: ${error.message}`);
+    }
   }
 
   /**

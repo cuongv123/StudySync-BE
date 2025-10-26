@@ -133,4 +133,25 @@ export class PaymentController {
       timestamp: new Date().toISOString(),
     };
   }
+
+  @Get('transaction/:orderCode')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'Get transaction details from PayOS' })
+  @ApiResponse({ status: 200, description: 'Returns full transaction info from PayOS gateway' })
+  async getTransactionDetails(@Request() req, @Query('orderCode') orderCode: string) {
+    try {
+      const transactionInfo = await this.paymentService.getPayOSTransactionInfo(orderCode);
+      
+      return {
+        data: transactionInfo,
+        statusCode: 200,
+        message: 'Transaction details retrieved successfully',
+        timestamp: new Date().toISOString(),
+      };
+    } catch (error: any) {
+      this.logger.error('Get transaction error:', error.message);
+      throw new BadRequestException(error.message);
+    }
+  }
 }

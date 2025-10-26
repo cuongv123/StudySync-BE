@@ -29,4 +29,29 @@ export declare class PaymentController {
         message: string;
         timestamp: string;
     }>;
+    getTransactionDetails(req: any, orderCode: string): Promise<{
+        data: {
+            orderCode: any;
+            amount: any;
+            description: any;
+            status: any;
+            currency: any;
+            paymentLinkId: any;
+            checkoutUrl: any;
+            qrCode: any;
+            transactions: any;
+            paymentRecord: {
+                id: number;
+                userId: string;
+                planId: number;
+                planName: string;
+                status: string;
+                paidAt: Date;
+                createdAt: Date;
+            };
+        };
+        statusCode: number;
+        message: string;
+        timestamp: string;
+    }>;
 }

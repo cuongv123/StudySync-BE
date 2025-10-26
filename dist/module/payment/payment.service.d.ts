@@ -29,5 +29,25 @@ export declare class PaymentService {
     private activateSubscription;
     getUserPayments(userId: string): Promise<SubscriptionPayment[]>;
     getPaymentByOrderCode(orderCode: string): Promise<SubscriptionPayment>;
+    getPayOSTransactionInfo(orderCode: string): Promise<{
+        orderCode: any;
+        amount: any;
+        description: any;
+        status: any;
+        currency: any;
+        paymentLinkId: any;
+        checkoutUrl: any;
+        qrCode: any;
+        transactions: any;
+        paymentRecord: {
+            id: number;
+            userId: string;
+            planId: number;
+            planName: string;
+            status: string;
+            paidAt: Date;
+            createdAt: Date;
+        };
+    }>;
     verifyWebhookSignature(webhookData: any): Promise<boolean>;
 }
