@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; background-color: #f4f4f4; }
+    .container { max-width: 600px; margin: 20px auto; background: #ffffff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; }
+    .content { padding: 30px; }
+    .button { display: inline-block; background: #667eea; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; margin: 20px 0; }
+    .footer { background: #f8f9fa; padding: 20px; text-align: center; font-size: 12px; color: #666; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🎉 Welcome to StudySync!</h1>
+    </div>
+    <div class="content">
+      <p>Hi <strong>{{username}}</strong>,</p>
+      <p>Congratulations! Your email has been verified successfully. Welcome to the StudySync community!</p>
+      <p>You can now start exploring all the features and benefits of StudySync.</p>
+      <center>
+        <a href="{{loginUrl}}" class="button">Start Learning</a>
+      </center>
+      <p>Need help? Contact us at <a href="mailto:{{supportEmail}}">{{supportEmail}}</a></p>
+    </div>
+    <div class="footer">
+      <p>&copy; {{year}} StudySync. All rights reserved.</p>
+    </div>
+  </div>
+</body>
+</html>

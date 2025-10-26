@@ -5,7 +5,7 @@ import {
   ManyToOne,
   JoinColumn,
 } from 'typeorm';
-import { User } from '../../User/User.entity';
+import { User } from '../../User/entities/User.entity';
 import { VideoCall } from './video-call.entity';
 
 @Entity('call_participants')

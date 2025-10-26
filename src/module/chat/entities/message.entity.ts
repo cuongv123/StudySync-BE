@@ -8,7 +8,7 @@ import {
   JoinColumn,
 } from 'typeorm';
 import { StudyGroup } from '../../group/entities/group.entity';
-import { User } from '../../User/User.entity';
+import { User } from '../../User/entities/User.entity';
 
 export enum MessageType {
   TEXT = 'text',

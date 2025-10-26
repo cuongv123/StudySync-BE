@@ -8,7 +8,7 @@ import {
   JoinColumn,
   OneToMany
 } from 'typeorm';
-import { User } from '../../User/User.entity';
+import { User } from '../../User/entities/User.entity';
 import { GroupMember } from './group-member.entity';
 import { GroupInvitation } from './group-invitation.entity';
 
