@@ -22,6 +22,13 @@ export class GroupController {
     return this.groupService.createGroup(createDto, req.user.id);
   }
 
+  @Get('all')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Lấy danh sách tất cả các nhóm trong hệ thống' })
+  getAllGroups(@Request() req: any) {
+    return this.groupService.getAllGroups(req.user.id);
+  }
+
   @Get('my-groups')
   @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Lấy danh sách nhóm của tôi' })

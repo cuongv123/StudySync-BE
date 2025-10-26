@@ -9,13 +9,10 @@ import { GroupInvitation } from 'src/module/group/entities/group-invitation.enti
 import { Notification } from 'src/module/notification/entities/notification.entity';
 import { Task } from 'src/module/task/entities/task.entity';
 import { Message } from 'src/module/chat/entities/message.entity';
-// Payment entities
-import { UserWallet } from 'src/module/payment/entities/user-wallet.entity';
-import { WalletTransaction } from 'src/module/payment/entities/wallet-transaction.entity';
-import { PaymentAttempt } from 'src/module/payment/entities/payment-attempt.entity';
-import { SubscriptionPlan } from 'src/module/payment/entities/subscription-plan.entity';
-import { UserSubscription } from 'src/module/payment/entities/user-subscription.entity';
-import { Payment } from 'src/module/payment/entities/payment.entity';
+// Subscription entities
+import { SubscriptionPlan } from 'src/module/subscription/entities/subscription-plan.entity';
+import { UserSubscription } from 'src/module/subscription/entities/user-subscription.entity';
+import { SubscriptionPayment } from 'src/module/subscription/entities/subscription-payment.entity';
 import { File as FileEntity } from 'src/module/file/entities/file.entity';
 import { UserStorage } from 'src/module/file/entities/user-storage.entity';
 import { GroupStorage } from 'src/module/file/entities/group-storage.entity';
@@ -40,7 +37,7 @@ import { CallParticipant } from 'src/module/video-call/entities/call-participant
           return {
             type: 'postgres',
             url: databaseUrl,
-            entities: [User, Token, StudyGroup, GroupMember, GroupInvitation, Notification, Task, Message, UserWallet, WalletTransaction, PaymentAttempt, SubscriptionPlan, UserSubscription, Payment, FileEntity, UserStorage, GroupStorage, VideoCall, CallParticipant],
+            entities: [User, Token, StudyGroup, GroupMember, GroupInvitation, Notification, Task, Message, SubscriptionPlan, UserSubscription, SubscriptionPayment, FileEntity, UserStorage, GroupStorage, VideoCall, CallParticipant],
             migrations: [__dirname + '/../migrations/*{.ts,.js}'],
             synchronize: false, // ✅ An toàn - không động Supabase
             logging: ['query', 'error'],
@@ -60,7 +57,7 @@ import { CallParticipant } from 'src/module/video-call/entities/call-participant
           username: configService.get<string>('DEV_DB_USERNAME', 'postgres'),
           password: configService.get<string>('DEV_DB_PASSWORD', ''),
           database: configService.get<string>('DEV_DB_DATABASE', 'studysync'),
-          entities: [User, Token, StudyGroup, GroupMember, GroupInvitation, Notification, Task, Message, UserWallet, WalletTransaction, PaymentAttempt, SubscriptionPlan, UserSubscription, Payment, FileEntity, UserStorage, GroupStorage, VideoCall, CallParticipant],
+          entities: [User, Token, StudyGroup, GroupMember, GroupInvitation, Notification, Task, Message, SubscriptionPlan, UserSubscription, SubscriptionPayment, FileEntity, UserStorage, GroupStorage, VideoCall, CallParticipant],
           migrations:
             process.env.NODE_ENV === 'production'
               ? ['dist/migrations/*.js']

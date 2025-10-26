@@ -56,6 +56,32 @@ export class GroupService {
     return groups;
   }
 
+  async getAllGroups(userId: string) {
+    // Lấy tất cả các nhóm với thông tin leader và số lượng thành viên
+    const groups = await this.groupRepository
+      .createQueryBuilder('group')
+      .leftJoinAndSelect('group.leader', 'leader')
+      .loadRelationCountAndMap('group.memberCount', 'group.members')
+      .where('group.isActive = :isActive', { isActive: true })
+      .orderBy('group.createdAt', 'DESC')
+      .getMany();
+
+    // Kiểm tra user đã join nhóm nào chưa
+    const userMemberships = await this.memberRepository.find({
+      where: { userId },
+      select: ['groupId'],
+    });
+    const joinedGroupIds = new Set(userMemberships.map(m => m.groupId));
+
+    // Thêm thông tin isMember cho mỗi nhóm
+    const groupsWithMemberStatus = groups.map(group => ({
+      ...group,
+      isMember: joinedGroupIds.has(group.id),
+    }));
+
+    return groupsWithMemberStatus;
+  }
+
   async getGroupDetail(id: number, userId: string) {
     const group = await this.groupRepository.findOne({
       where: { id },
