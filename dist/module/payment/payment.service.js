@@ -103,17 +103,26 @@ let PaymentService = PaymentService_1 = class PaymentService {
         }
     }
     async handlePaymentWebhook(webhookData) {
-        this.logger.log(`Processing webhook for order: ${webhookData.orderCode}`);
+        var _a;
+        this.logger.log('=== Webhook Data Received ===');
+        this.logger.log(JSON.stringify(webhookData, null, 2));
+        const orderCode = webhookData.orderCode || ((_a = webhookData.data) === null || _a === void 0 ? void 0 : _a.orderCode) || webhookData.order_code;
+        this.logger.log(`Processing webhook for order: ${orderCode}`);
+        if (!orderCode) {
+            this.logger.error('OrderCode is missing in webhook data!');
+            this.logger.error('Webhook keys:', Object.keys(webhookData));
+            throw new common_1.BadRequestException('OrderCode is required');
+        }
         const payment = await this.paymentRepository.findOne({
-            where: { orderCode: String(webhookData.orderCode) },
+            where: { orderCode: String(orderCode) },
             relations: ['plan'],
         });
         if (!payment) {
-            this.logger.error(`Payment not found for order: ${webhookData.orderCode}`);
+            this.logger.error(`Payment not found for order: ${orderCode}`);
             throw new common_1.NotFoundException('Payment not found');
         }
         if (payment.status === subscription_payment_entity_1.PaymentStatus.PAID) {
-            this.logger.log(`Payment already processed: ${webhookData.orderCode}`);
+            this.logger.log(`Payment already processed: ${orderCode}`);
             return { message: 'Payment already processed' };
         }
         if (webhookData.code === '00' || webhookData.success) {
