@@ -56,18 +56,19 @@ let PaymentService = PaymentService_1 = class PaymentService {
                 this.logger.log(`User ${userId} upgrading from ${existingSub.plan.planName} to ${plan.planName}`);
             }
         }
-        const orderCode = `SUB${Date.now()}${Math.floor(Math.random() * 1000)}`;
+        const orderCode = Number(Date.now().toString() + Math.floor(Math.random() * 1000).toString());
+        this.logger.log(`Generated orderCode: ${orderCode}`);
         const payment = this.paymentRepository.create({
             userId,
             planId,
-            orderCode,
+            orderCode: orderCode.toString(),
             amount: plan.price,
             status: subscription_payment_entity_1.PaymentStatus.PENDING,
         });
         await this.paymentRepository.save(payment);
         try {
             const paymentLink = await this.payosService.createPaymentLink({
-                orderCode,
+                orderCode: orderCode.toString(),
                 amount: plan.price,
                 description: `Subscription: ${plan.planName} - ${plan.durationDays} days`,
                 buyerName: userInfo.name || 'Guest',

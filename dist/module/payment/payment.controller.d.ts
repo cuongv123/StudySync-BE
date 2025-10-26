@@ -6,7 +6,7 @@ export declare class PaymentController {
     constructor(paymentService: PaymentService);
     purchaseSubscription(req: any, purchaseDto: PurchaseSubscriptionDto): Promise<{
         data: {
-            orderCode: string;
+            orderCode: number;
             checkoutUrl: any;
             qrCode: any;
             amount: number;

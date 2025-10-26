@@ -63,14 +63,16 @@ export class PaymentService {
       }
     }
 
-    // Generate unique order code
-    const orderCode = `SUB${Date.now()}${Math.floor(Math.random() * 1000)}`;
+    // Generate unique order code (only numbers for PayOS)
+    const orderCode = Number(Date.now().toString() + Math.floor(Math.random() * 1000).toString());
+    
+    this.logger.log(`Generated orderCode: ${orderCode}`);
 
     // Create payment record
     const payment = this.paymentRepository.create({
       userId,
       planId,
-      orderCode,
+      orderCode: orderCode.toString(), // Store as string in DB
       amount: plan.price,
       status: PaymentStatus.PENDING,
     });
@@ -79,7 +81,7 @@ export class PaymentService {
     // Create PayOS payment link
     try {
       const paymentLink = await this.payosService.createPaymentLink({
-        orderCode,
+        orderCode: orderCode.toString(),
         amount: plan.price,
         description: `Subscription: ${plan.planName} - ${plan.durationDays} days`,
         buyerName: userInfo.name || 'Guest',

@@ -17,7 +17,7 @@ export declare class PaymentService {
         email?: string;
         phone?: string;
     }): Promise<{
-        orderCode: string;
+        orderCode: number;
         checkoutUrl: any;
         qrCode: any;
         amount: number;
