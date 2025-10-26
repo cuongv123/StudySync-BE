@@ -9,12 +9,10 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.ReviewModule = void 0;
 const common_1 = require("@nestjs/common");
 const typeorm_1 = require("@nestjs/typeorm");
-const core_1 = require("@nestjs/core");
 const review_controller_1 = require("./review.controller");
 const review_service_1 = require("./review.service");
 const review_entity_1 = require("./entities/review.entity");
 const shared_auth_module_1 = require("../../common/auth/shared-auth.module");
-const jwt_auth_guard_1 = require("../auth/guards/jwt.auth.guard");
 let ReviewModule = class ReviewModule {
 };
 exports.ReviewModule = ReviewModule;
@@ -25,13 +23,7 @@ exports.ReviewModule = ReviewModule = __decorate([
             shared_auth_module_1.SharedAuthModule,
         ],
         controllers: [review_controller_1.ReviewController],
-        providers: [
-            review_service_1.ReviewService,
-            {
-                provide: core_1.APP_GUARD,
-                useClass: jwt_auth_guard_1.JwtAuthGuard,
-            },
-        ],
+        providers: [review_service_1.ReviewService],
         exports: [review_service_1.ReviewService],
     })
 ], ReviewModule);
