@@ -3,6 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { PassportModule } from '@nestjs/passport';
 import { ConfigModule } from '@nestjs/config';
 import { PaymentController } from './payment.controller';
+import { WebhookController } from './webhook.controller';
 import { PaymentService } from './payment.service';
 import { SubscriptionPayment } from '../subscription/entities/subscription-payment.entity';
 import { SubscriptionPlan } from '../subscription/entities/subscription-plan.entity';
@@ -20,7 +21,7 @@ import { JwtStrategy } from '../auth/strategies/jwt.auth.strategies';
     PassportModule.register({ defaultStrategy: 'jwt' }),
     ConfigModule,
   ],
-  controllers: [PaymentController],
+  controllers: [PaymentController, WebhookController],
   providers: [
     JwtStrategy,
     PaymentService,
