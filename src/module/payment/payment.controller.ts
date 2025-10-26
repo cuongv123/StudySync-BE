@@ -60,41 +60,40 @@ export class PaymentController {
     }
   }
 
+  @Get('webhook-test')
+  @ApiOperation({ summary: 'Test webhook endpoint health' })
+  async testWebhook() {
+    this.logger.log('✅ Webhook test endpoint called');
+    return { 
+      status: 'ok',
+      message: 'Webhook endpoint is reachable',
+      timestamp: new Date().toISOString()
+    };
+  }
+
   @Post('webhook')
   @ApiOperation({ summary: 'PayOS webhook endpoint' })
   @ApiResponse({ status: 200, description: 'Webhook processed successfully' })
-  async handlePayOSWebhook(@Body() webhookData: any, @Request() req) {
+  async handlePayOSWebhook(@Body() webhookData: any) {
     try {
-      this.logger.log('Received webhook request', JSON.stringify(webhookData));
+      this.logger.log('=== PayOS Webhook Received ===');
+      this.logger.log('Body:', JSON.stringify(webhookData));
 
-      // Check if this is a test request from PayOS (empty body or test data)
+      // Always return 200 OK for PayOS webhook test
       if (!webhookData || Object.keys(webhookData).length === 0) {
-        this.logger.log('Received test webhook from PayOS');
-        return {
-          success: true,
-          message: 'Webhook endpoint is working',
-          timestamp: new Date().toISOString(),
-        };
+        this.logger.log('✅ Empty webhook - Test from PayOS');
+        return { success: true };
       }
 
-      // Verify webhook signature để đảm bảo request từ PayOS
-      // TODO: Enable in production
-      // const isValid = await this.paymentService.verifyWebhookSignature(webhookData);
-      // if (!isValid) {
-      //   this.logger.warn('Invalid webhook signature detected');
-      //   throw new BadRequestException('Invalid webhook signature');
-      // }
-
+      // Process webhook
       const result = await this.paymentService.handlePaymentWebhook(webhookData);
-      return {
-        data: result,
-        statusCode: 200,
-        message: 'Webhook processed successfully',
-        timestamp: new Date().toISOString(),
-      };
+      this.logger.log('✅ Webhook processed successfully');
+      
+      return { success: true, data: result };
     } catch (error: any) {
-      this.logger.error('Webhook error:', error.message);
-      throw new BadRequestException(error.message);
+      this.logger.error('❌ Webhook error:', error.message);
+      // Return 200 to prevent PayOS retry
+      return { success: false, error: error.message };
     }
   }
 
