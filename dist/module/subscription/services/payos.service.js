@@ -41,14 +41,13 @@ let PayOSService = PayOSService_1 = class PayOSService {
                 buyerEmail: data.buyerEmail,
                 buyerPhone: data.buyerPhone,
                 buyerAddress: data.buyerAddress || 'N/A',
-                buyerCompanyName: data.buyerCompanyName,
-                buyerTaxCode: data.buyerTaxCode,
                 items: data.items,
                 returnUrl: data.returnUrl || `${this.configService.get('APP_URL')}/subscription/success`,
                 cancelUrl: data.cancelUrl || `${this.configService.get('APP_URL')}/subscription/cancel`,
                 expiredAt: Math.floor(Date.now() / 1000) + 15 * 60,
             };
             this.logger.log(`Creating payment link for order: ${data.orderCode}`);
+            this.logger.log(`Payment data: ${JSON.stringify(paymentData, null, 2)}`);
             const response = await this.payOS.paymentRequests.create(paymentData);
             this.logger.log(`Payment link created successfully: ${response.checkoutUrl}`);
             return response;
