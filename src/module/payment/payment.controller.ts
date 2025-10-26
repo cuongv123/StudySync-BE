@@ -43,6 +43,16 @@ export class PaymentController {
     @Body() purchaseDto: PurchaseSubscriptionDto
   ) {
     try {
+      // Debug logging
+      this.logger.log('=== Purchase Request ===');
+      this.logger.log('req.user:', JSON.stringify(req.user));
+      this.logger.log('purchaseDto:', JSON.stringify(purchaseDto));
+
+      // Validate userId
+      if (!req.user || !req.user.sub) {
+        throw new BadRequestException('User not authenticated. Please login again.');
+      }
+
       // Lấy thông tin user từ JWT token hoặc từ DTO (nếu user cung cấp)
       const paymentData = await this.paymentService.createSubscriptionPayment(
         req.user.sub,
@@ -61,19 +71,9 @@ export class PaymentController {
         timestamp: new Date().toISOString(),
       };
     } catch (error: any) {
+      this.logger.error('Purchase error:', error.message);
       throw new BadRequestException(error.message);
     }
-  }
-
-  @Get('webhook-test')
-  @ApiOperation({ summary: 'Test webhook endpoint health' })
-  async testWebhook() {
-    this.logger.log('✅ Webhook test endpoint called');
-    return { 
-      status: 'ok',
-      message: 'Webhook endpoint is reachable',
-      timestamp: new Date().toISOString()
-    };
   }
 
   @Post('webhook')

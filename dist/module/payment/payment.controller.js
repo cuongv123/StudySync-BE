@@ -27,6 +27,12 @@ let PaymentController = PaymentController_1 = class PaymentController {
     async purchaseSubscription(req, purchaseDto) {
         var _a;
         try {
+            this.logger.log('=== Purchase Request ===');
+            this.logger.log('req.user:', JSON.stringify(req.user));
+            this.logger.log('purchaseDto:', JSON.stringify(purchaseDto));
+            if (!req.user || !req.user.sub) {
+                throw new common_1.BadRequestException('User not authenticated. Please login again.');
+            }
             const paymentData = await this.paymentService.createSubscriptionPayment(req.user.sub, purchaseDto.planId, {
                 name: purchaseDto.name || req.user.username || ((_a = req.user.email) === null || _a === void 0 ? void 0 : _a.split('@')[0]) || 'User',
                 email: purchaseDto.email || req.user.email || 'user@studysync.com',
@@ -40,16 +46,9 @@ let PaymentController = PaymentController_1 = class PaymentController {
             };
         }
         catch (error) {
+            this.logger.error('Purchase error:', error.message);
             throw new common_1.BadRequestException(error.message);
         }
-    }
-    async testWebhook() {
-        this.logger.log('✅ Webhook test endpoint called');
-        return {
-            status: 'ok',
-            message: 'Webhook endpoint is reachable',
-            timestamp: new Date().toISOString()
-        };
     }
     async handlePayOSWebhook(req, res) {
         this.logger.log('=== PayOS Webhook START ===');
@@ -99,13 +98,6 @@ __decorate([
     __metadata("design:paramtypes", [Object, purchase_subscription_dto_1.PurchaseSubscriptionDto]),
     __metadata("design:returntype", Promise)
 ], PaymentController.prototype, "purchaseSubscription", null);
-__decorate([
-    (0, common_1.Get)('webhook-test'),
-    (0, swagger_1.ApiOperation)({ summary: 'Test webhook endpoint health' }),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
-    __metadata("design:returntype", Promise)
-], PaymentController.prototype, "testWebhook", null);
 __decorate([
     (0, common_1.Post)('webhook'),
     (0, swagger_1.ApiOperation)({ summary: 'PayOS webhook endpoint' }),

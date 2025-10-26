@@ -16,11 +16,6 @@ export declare class PaymentController {
         message: string;
         timestamp: string;
     }>;
-    testWebhook(): Promise<{
-        status: string;
-        message: string;
-        timestamp: string;
-    }>;
     handlePayOSWebhook(req: any, res: any): Promise<any>;
     getPaymentHistory(req: any): Promise<{
         data: import("../subscription/entities/subscription-payment.entity").SubscriptionPayment[];
