@@ -12,10 +12,10 @@ import { SubscriptionModule } from './module/subscription/subscription.module';
 import { PaymentModule } from './module/payment/payment.module';
 import { FileModule } from './module/file/file.module';
 import { VideoCallModule } from './module/video-call/video-call.module';
-import { AiChatModule } from './module/ai-chat/ai-chat.module';
+// import { AiChatModule } from './module/ai-chat/ai-chat.module'; // TODO: Enable after build
 
 
 @Module({
-    imports: [UserModule, DatabaseModule, AuthModule, TokenModule, MailModule, GroupModule, NotificationModule, TaskModule, ChatModule, SubscriptionModule, PaymentModule, FileModule, VideoCallModule, AiChatModule],
+    imports: [UserModule, DatabaseModule, AuthModule, TokenModule, MailModule, GroupModule, NotificationModule, TaskModule, ChatModule, SubscriptionModule, PaymentModule, FileModule, VideoCallModule],
 })
 export class AppModule {}
