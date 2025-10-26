@@ -25,16 +25,17 @@ let PaymentController = PaymentController_1 = class PaymentController {
         this.logger = new common_1.Logger(PaymentController_1.name);
     }
     async purchaseSubscription(req, purchaseDto) {
-        var _a;
+        var _a, _b, _c, _d;
         try {
             this.logger.log('=== Purchase Request ===');
             this.logger.log('req.user:', JSON.stringify(req.user));
             this.logger.log('purchaseDto:', JSON.stringify(purchaseDto));
-            if (!req.user || !req.user.sub) {
+            const userId = ((_a = req.user) === null || _a === void 0 ? void 0 : _a.id) || ((_b = req.user) === null || _b === void 0 ? void 0 : _b.userId) || ((_c = req.user) === null || _c === void 0 ? void 0 : _c.sub);
+            if (!userId) {
                 throw new common_1.BadRequestException('User not authenticated. Please login again.');
             }
-            const paymentData = await this.paymentService.createSubscriptionPayment(req.user.sub, purchaseDto.planId, {
-                name: purchaseDto.name || req.user.username || ((_a = req.user.email) === null || _a === void 0 ? void 0 : _a.split('@')[0]) || 'User',
+            const paymentData = await this.paymentService.createSubscriptionPayment(userId, purchaseDto.planId, {
+                name: purchaseDto.name || req.user.username || ((_d = req.user.email) === null || _d === void 0 ? void 0 : _d.split('@')[0]) || 'User',
                 email: purchaseDto.email || req.user.email || 'user@studysync.com',
                 phone: purchaseDto.phone || req.user.phone || '0000000000',
             });

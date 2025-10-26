@@ -48,14 +48,16 @@ export class PaymentController {
       this.logger.log('req.user:', JSON.stringify(req.user));
       this.logger.log('purchaseDto:', JSON.stringify(purchaseDto));
 
-      // Validate userId
-      if (!req.user || !req.user.sub) {
+      // Validate userId - use req.user.id OR req.user.userId OR req.user.sub
+      const userId = req.user?.id || req.user?.userId || req.user?.sub;
+      
+      if (!userId) {
         throw new BadRequestException('User not authenticated. Please login again.');
       }
 
       // Lấy thông tin user từ JWT token hoặc từ DTO (nếu user cung cấp)
       const paymentData = await this.paymentService.createSubscriptionPayment(
-        req.user.sub,
+        userId,
         purchaseDto.planId,
         {
           name: purchaseDto.name || req.user.username || req.user.email?.split('@')[0] || 'User',
