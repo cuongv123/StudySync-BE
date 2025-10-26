@@ -26,6 +26,7 @@ const user_storage_entity_1 = require("../module/file/entities/user-storage.enti
 const group_storage_entity_1 = require("../module/file/entities/group-storage.entity");
 const video_call_entity_1 = require("../module/video-call/entities/video-call.entity");
 const call_participant_entity_1 = require("../module/video-call/entities/call-participant.entity");
+const ai_query_history_entity_1 = require("../module/ai-chat/entities/ai-query-history.entity");
 let DatabaseModule = class DatabaseModule {
 };
 exports.DatabaseModule = DatabaseModule;
@@ -45,7 +46,7 @@ exports.DatabaseModule = DatabaseModule = __decorate([
                         return {
                             type: 'postgres',
                             url: databaseUrl,
-                            entities: [User_entity_1.User, token_entity_1.Token, group_entity_1.StudyGroup, group_member_entity_1.GroupMember, group_invitation_entity_1.GroupInvitation, notification_entity_1.Notification, task_entity_1.Task, message_entity_1.Message, subscription_plan_entity_1.SubscriptionPlan, user_subscription_entity_1.UserSubscription, subscription_payment_entity_1.SubscriptionPayment, file_entity_1.File, user_storage_entity_1.UserStorage, group_storage_entity_1.GroupStorage, video_call_entity_1.VideoCall, call_participant_entity_1.CallParticipant],
+                            entities: [User_entity_1.User, token_entity_1.Token, group_entity_1.StudyGroup, group_member_entity_1.GroupMember, group_invitation_entity_1.GroupInvitation, notification_entity_1.Notification, task_entity_1.Task, message_entity_1.Message, subscription_plan_entity_1.SubscriptionPlan, user_subscription_entity_1.UserSubscription, subscription_payment_entity_1.SubscriptionPayment, file_entity_1.File, user_storage_entity_1.UserStorage, group_storage_entity_1.GroupStorage, video_call_entity_1.VideoCall, call_participant_entity_1.CallParticipant, ai_query_history_entity_1.AiQueryHistory],
                             migrations: [__dirname + '/../migrations/*{.ts,.js}'],
                             synchronize: false,
                             logging: ['query', 'error'],
@@ -63,7 +64,7 @@ exports.DatabaseModule = DatabaseModule = __decorate([
                         username: configService.get('DEV_DB_USERNAME', 'postgres'),
                         password: configService.get('DEV_DB_PASSWORD', ''),
                         database: configService.get('DEV_DB_DATABASE', 'studysync'),
-                        entities: [User_entity_1.User, token_entity_1.Token, group_entity_1.StudyGroup, group_member_entity_1.GroupMember, group_invitation_entity_1.GroupInvitation, notification_entity_1.Notification, task_entity_1.Task, message_entity_1.Message, subscription_plan_entity_1.SubscriptionPlan, user_subscription_entity_1.UserSubscription, subscription_payment_entity_1.SubscriptionPayment, file_entity_1.File, user_storage_entity_1.UserStorage, group_storage_entity_1.GroupStorage, video_call_entity_1.VideoCall, call_participant_entity_1.CallParticipant],
+                        entities: [User_entity_1.User, token_entity_1.Token, group_entity_1.StudyGroup, group_member_entity_1.GroupMember, group_invitation_entity_1.GroupInvitation, notification_entity_1.Notification, task_entity_1.Task, message_entity_1.Message, subscription_plan_entity_1.SubscriptionPlan, user_subscription_entity_1.UserSubscription, subscription_payment_entity_1.SubscriptionPayment, file_entity_1.File, user_storage_entity_1.UserStorage, group_storage_entity_1.GroupStorage, video_call_entity_1.VideoCall, call_participant_entity_1.CallParticipant, ai_query_history_entity_1.AiQueryHistory],
                         migrations: process.env.NODE_ENV === 'production'
                             ? ['dist/migrations/*.js']
                             : ['../migrations/*.ts'],

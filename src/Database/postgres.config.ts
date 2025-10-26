@@ -18,6 +18,7 @@ import { UserStorage } from 'src/module/file/entities/user-storage.entity';
 import { GroupStorage } from 'src/module/file/entities/group-storage.entity';
 import { VideoCall } from 'src/module/video-call/entities/video-call.entity';
 import { CallParticipant } from 'src/module/video-call/entities/call-participant.entity';
+import { AiQueryHistory } from 'src/module/ai-chat/entities/ai-query-history.entity';
 
 @Module({
   imports: [
@@ -37,7 +38,7 @@ import { CallParticipant } from 'src/module/video-call/entities/call-participant
           return {
             type: 'postgres',
             url: databaseUrl,
-            entities: [User, Token, StudyGroup, GroupMember, GroupInvitation, Notification, Task, Message, SubscriptionPlan, UserSubscription, SubscriptionPayment, FileEntity, UserStorage, GroupStorage, VideoCall, CallParticipant],
+            entities: [User, Token, StudyGroup, GroupMember, GroupInvitation, Notification, Task, Message, SubscriptionPlan, UserSubscription, SubscriptionPayment, FileEntity, UserStorage, GroupStorage, VideoCall, CallParticipant, AiQueryHistory],
             migrations: [__dirname + '/../migrations/*{.ts,.js}'],
             synchronize: false, // ✅ An toàn - không động Supabase
             logging: ['query', 'error'],
@@ -57,7 +58,7 @@ import { CallParticipant } from 'src/module/video-call/entities/call-participant
           username: configService.get<string>('DEV_DB_USERNAME', 'postgres'),
           password: configService.get<string>('DEV_DB_PASSWORD', ''),
           database: configService.get<string>('DEV_DB_DATABASE', 'studysync'),
-          entities: [User, Token, StudyGroup, GroupMember, GroupInvitation, Notification, Task, Message, SubscriptionPlan, UserSubscription, SubscriptionPayment, FileEntity, UserStorage, GroupStorage, VideoCall, CallParticipant],
+          entities: [User, Token, StudyGroup, GroupMember, GroupInvitation, Notification, Task, Message, SubscriptionPlan, UserSubscription, SubscriptionPayment, FileEntity, UserStorage, GroupStorage, VideoCall, CallParticipant, AiQueryHistory],
           migrations:
             process.env.NODE_ENV === 'production'
               ? ['dist/migrations/*.js']
