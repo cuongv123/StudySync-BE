@@ -49,8 +49,15 @@ export class SubscriptionController {
   @ApiOperation({ summary: 'Get current user subscription' })
   @ApiResponse({ status: 200, description: 'Returns current subscription details' })
   async getCurrentSubscription(@Request() req) {
+    // Fix: Use req.user.id instead of req.user.sub
+    const userId = req.user?.id || req.user?.userId || req.user?.sub;
+    
+    if (!userId) {
+      throw new BadRequestException('User not authenticated');
+    }
+
     return {
-      data: await this.subscriptionService.getUserSubscription(req.user.sub),
+      data: await this.subscriptionService.getUserSubscription(userId),
       statusCode: 200,
       message: 'Success',
       timestamp: new Date().toISOString(),

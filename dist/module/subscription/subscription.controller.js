@@ -30,8 +30,13 @@ let SubscriptionController = class SubscriptionController {
         };
     }
     async getCurrentSubscription(req) {
+        var _a, _b, _c;
+        const userId = ((_a = req.user) === null || _a === void 0 ? void 0 : _a.id) || ((_b = req.user) === null || _b === void 0 ? void 0 : _b.userId) || ((_c = req.user) === null || _c === void 0 ? void 0 : _c.sub);
+        if (!userId) {
+            throw new common_1.BadRequestException('User not authenticated');
+        }
         return {
-            data: await this.subscriptionService.getUserSubscription(req.user.sub),
+            data: await this.subscriptionService.getUserSubscription(userId),
             statusCode: 200,
             message: 'Success',
             timestamp: new Date().toISOString(),
