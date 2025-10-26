@@ -13,9 +13,10 @@ import { PaymentModule } from './module/payment/payment.module';
 import { FileModule } from './module/file/file.module';
 import { VideoCallModule } from './module/video-call/video-call.module';
 import { AiChatModule } from './module/ai-chat/ai-chat.module';
+import { ReviewModule } from './module/review/review.module';
 
 
 @Module({
-    imports: [UserModule, DatabaseModule, AuthModule, TokenModule, MailModule, GroupModule, NotificationModule, TaskModule, ChatModule, SubscriptionModule, PaymentModule, FileModule, VideoCallModule, AiChatModule],
+    imports: [UserModule, DatabaseModule, AuthModule, TokenModule, MailModule, GroupModule, NotificationModule, TaskModule, ChatModule, SubscriptionModule, PaymentModule, FileModule, VideoCallModule, AiChatModule, ReviewModule],
 })
 export class AppModule {}
