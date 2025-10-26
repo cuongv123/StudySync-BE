@@ -8,6 +8,9 @@ import {
   Request,
   BadRequestException,
   Logger,
+  Req,
+  Res,
+  HttpStatus,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -18,6 +21,7 @@ import {
 import { JwtAuthGuard } from '../auth/guards/jwt.auth.guard';
 import { PaymentService } from './payment.service';
 import { PurchaseSubscriptionDto } from './dto/purchase-subscription.dto';
+import { Request as ExpressRequest, Response } from 'express';
 
 @ApiTags('Payments')
 @Controller('payments')
@@ -74,26 +78,30 @@ export class PaymentController {
   @Post('webhook')
   @ApiOperation({ summary: 'PayOS webhook endpoint' })
   @ApiResponse({ status: 200, description: 'Webhook processed successfully' })
-  async handlePayOSWebhook(@Body() webhookData: any) {
+  async handlePayOSWebhook(@Req() req: ExpressRequest, @Res() res: Response) {
     try {
       this.logger.log('=== PayOS Webhook Received ===');
-      this.logger.log('Body:', JSON.stringify(webhookData));
+      this.logger.log('Headers:', JSON.stringify(req.headers));
+      this.logger.log('Body:', JSON.stringify(req.body));
+      
+      const webhookData = req.body;
 
       // Always return 200 OK for PayOS webhook test
       if (!webhookData || Object.keys(webhookData).length === 0) {
         this.logger.log('✅ Empty webhook - Test from PayOS');
-        return { success: true };
+        return res.status(HttpStatus.OK).json({ success: true });
       }
 
       // Process webhook
       const result = await this.paymentService.handlePaymentWebhook(webhookData);
       this.logger.log('✅ Webhook processed successfully');
       
-      return { success: true, data: result };
+      return res.status(HttpStatus.OK).json({ success: true, data: result });
     } catch (error: any) {
       this.logger.error('❌ Webhook error:', error.message);
+      this.logger.error('Stack:', error.stack);
       // Return 200 to prevent PayOS retry
-      return { success: false, error: error.message };
+      return res.status(HttpStatus.OK).json({ success: false, error: error.message });
     }
   }
 
