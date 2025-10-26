@@ -43,28 +43,30 @@ let PaymentController = PaymentController_1 = class PaymentController {
             throw new common_1.BadRequestException(error.message);
         }
     }
-    async handlePayOSWebhook(webhookData, req) {
+    async testWebhook() {
+        this.logger.log('✅ Webhook test endpoint called');
+        return {
+            status: 'ok',
+            message: 'Webhook endpoint is reachable',
+            timestamp: new Date().toISOString()
+        };
+    }
+    async handlePayOSWebhook(req, res) {
+        this.logger.log('=== PayOS Webhook START ===');
         try {
-            this.logger.log('Received webhook request', JSON.stringify(webhookData));
-            if (!webhookData || Object.keys(webhookData).length === 0) {
-                this.logger.log('Received test webhook from PayOS');
-                return {
-                    success: true,
-                    message: 'Webhook endpoint is working',
-                    timestamp: new Date().toISOString(),
-                };
+            const body = req.body || {};
+            this.logger.log('Webhook Body:', JSON.stringify(body));
+            if (!body || Object.keys(body).length === 0) {
+                this.logger.log('✅ Empty body - PayOS test');
+                return res.status(200).json({ success: true, message: 'Webhook OK' });
             }
-            const result = await this.paymentService.handlePaymentWebhook(webhookData);
-            return {
-                data: result,
-                statusCode: 200,
-                message: 'Webhook processed successfully',
-                timestamp: new Date().toISOString(),
-            };
+            const result = await this.paymentService.handlePaymentWebhook(body);
+            this.logger.log('✅ Webhook processed');
+            return res.status(200).json({ success: true, data: result });
         }
         catch (error) {
-            this.logger.error('Webhook error:', error.message);
-            throw new common_1.BadRequestException(error.message);
+            this.logger.error('❌ Webhook error:', error.message);
+            return res.status(200).json({ success: false, error: error.message });
         }
     }
     async getPaymentHistory(req) {
@@ -98,11 +100,18 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], PaymentController.prototype, "purchaseSubscription", null);
 __decorate([
+    (0, common_1.Get)('webhook-test'),
+    (0, swagger_1.ApiOperation)({ summary: 'Test webhook endpoint health' }),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", Promise)
+], PaymentController.prototype, "testWebhook", null);
+__decorate([
     (0, common_1.Post)('webhook'),
     (0, swagger_1.ApiOperation)({ summary: 'PayOS webhook endpoint' }),
     (0, swagger_1.ApiResponse)({ status: 200, description: 'Webhook processed successfully' }),
-    __param(0, (0, common_1.Body)()),
-    __param(1, (0, common_1.Request)()),
+    __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Res)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object, Object]),
     __metadata("design:returntype", Promise)

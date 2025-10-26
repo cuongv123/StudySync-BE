@@ -11,6 +11,7 @@ import {
   Req,
   Res,
   HttpStatus,
+  RawBodyRequest,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -78,30 +79,28 @@ export class PaymentController {
   @Post('webhook')
   @ApiOperation({ summary: 'PayOS webhook endpoint' })
   @ApiResponse({ status: 200, description: 'Webhook processed successfully' })
-  async handlePayOSWebhook(@Req() req: ExpressRequest, @Res() res: Response) {
+  async handlePayOSWebhook(@Req() req: any, @Res() res: any) {
+    this.logger.log('=== PayOS Webhook START ===');
+    
     try {
-      this.logger.log('=== PayOS Webhook Received ===');
-      this.logger.log('Headers:', JSON.stringify(req.headers));
-      this.logger.log('Body:', JSON.stringify(req.body));
-      
-      const webhookData = req.body;
+      const body = req.body || {};
+      this.logger.log('Webhook Body:', JSON.stringify(body));
 
-      // Always return 200 OK for PayOS webhook test
-      if (!webhookData || Object.keys(webhookData).length === 0) {
-        this.logger.log('✅ Empty webhook - Test from PayOS');
-        return res.status(HttpStatus.OK).json({ success: true });
+      // For PayOS test - just return success
+      if (!body || Object.keys(body).length === 0) {
+        this.logger.log('✅ Empty body - PayOS test');
+        return res.status(200).json({ success: true, message: 'Webhook OK' });
       }
 
-      // Process webhook
-      const result = await this.paymentService.handlePaymentWebhook(webhookData);
-      this.logger.log('✅ Webhook processed successfully');
+      // Process real webhook
+      const result = await this.paymentService.handlePaymentWebhook(body);
+      this.logger.log('✅ Webhook processed');
       
-      return res.status(HttpStatus.OK).json({ success: true, data: result });
+      return res.status(200).json({ success: true, data: result });
     } catch (error: any) {
       this.logger.error('❌ Webhook error:', error.message);
-      this.logger.error('Stack:', error.stack);
-      // Return 200 to prevent PayOS retry
-      return res.status(HttpStatus.OK).json({ success: false, error: error.message });
+      // Always return 200 to prevent retry
+      return res.status(200).json({ success: false, error: error.message });
     }
   }
 

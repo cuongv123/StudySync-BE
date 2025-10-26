@@ -16,21 +16,12 @@ export declare class PaymentController {
         message: string;
         timestamp: string;
     }>;
-    handlePayOSWebhook(webhookData: any, req: any): Promise<{
-        success: boolean;
+    testWebhook(): Promise<{
+        status: string;
         message: string;
         timestamp: string;
-        data?: undefined;
-        statusCode?: undefined;
-    } | {
-        data: {
-            message: string;
-        };
-        statusCode: number;
-        message: string;
-        timestamp: string;
-        success?: undefined;
     }>;
+    handlePayOSWebhook(req: any, res: any): Promise<any>;
     getPaymentHistory(req: any): Promise<{
         data: import("../subscription/entities/subscription-payment.entity").SubscriptionPayment[];
         statusCode: number;
