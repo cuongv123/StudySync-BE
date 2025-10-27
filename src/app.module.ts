@@ -1,7 +1,8 @@
 import { Module } from '@nestjs/common';
-import { UserModule } from './module/User/User.module';
 import { DatabaseModule } from './Database/postgres.config';
 import { AuthModule } from './module/auth/auth.module';
+import { AdminModule } from './module/admin/admin.module';
+import { UserModule } from './module/User/User.module';
 import { TokenModule } from './module/token/token.module';
 import { MailModule } from './shared/mail/mail.module';
 import { GroupModule } from './module/group/group.module';
@@ -17,6 +18,6 @@ import { ReviewModule } from './module/review/review.module';
 
 
 @Module({
-    imports: [UserModule, DatabaseModule, AuthModule, TokenModule, MailModule, GroupModule, NotificationModule, TaskModule, ChatModule, SubscriptionModule, PaymentModule, FileModule, VideoCallModule, AiChatModule, ReviewModule],
+    imports: [DatabaseModule, AuthModule, AdminModule, UserModule, TokenModule, MailModule, GroupModule, NotificationModule, TaskModule, ChatModule, SubscriptionModule, PaymentModule, FileModule, VideoCallModule, AiChatModule, ReviewModule],
 })
 export class AppModule {}
