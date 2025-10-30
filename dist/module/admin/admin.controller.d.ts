@@ -4,6 +4,7 @@ import { ResetPasswordDto } from '../User/dto/reset-password';
 export declare class AdminController {
     private readonly adminService;
     constructor(adminService: AdminService);
+    getAdminProfile(user: any): Promise<import("../User/entities/User.entity").User>;
     getDashboard(): Promise<{
         totalUsers: number;
         totalRevenue: number;
@@ -17,7 +18,7 @@ export declare class AdminController {
         };
         reviewStats: {};
     }>;
-    getAllUsers(query: any): Promise<import("../User/entities/User.entity").User[]>;
+    getAllUsers(user: any, query: any): Promise<import("../User/entities/User.entity").User[]>;
     getUserById(id: string): Promise<import("../User/entities/User.entity").User>;
     resetUserPassword(id: string, dto: ResetPasswordDto): Promise<{
         message: string;

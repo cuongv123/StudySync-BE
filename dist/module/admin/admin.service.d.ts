@@ -12,6 +12,7 @@ export declare class AdminService {
     private readonly userSubscriptionRepository;
     private readonly planRepository;
     constructor(usersService: UsersService, reviewService: ReviewService, paymentRepository: Repository<SubscriptionPayment>, userSubscriptionRepository: Repository<UserSubscription>, planRepository: Repository<SubscriptionPlan>);
+    getAdminProfile(adminId: string): Promise<import("../User/entities/User.entity").User>;
     getDashboard(): Promise<{
         totalUsers: number;
         totalRevenue: number;
@@ -25,7 +26,7 @@ export declare class AdminService {
         };
         reviewStats: {};
     }>;
-    listUsers(query: any): Promise<import("../User/entities/User.entity").User[]>;
+    listUsers(adminId: string, query: any): Promise<import("../User/entities/User.entity").User[]>;
     getUserById(id: string): Promise<import("../User/entities/User.entity").User>;
     resetUserPassword(id: string, newPassword: string): Promise<{
         message: string;

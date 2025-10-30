@@ -21,6 +21,10 @@ export class AdminService {
     private readonly planRepository: Repository<SubscriptionPlan>,
   ) {}
 
+  async getAdminProfile(adminId: string) {
+    return this.usersService.findOne(adminId);
+  }
+
   async getDashboard() {
     const totalUsers = await this.usersService.findAll();
     const totalRevenue = await this.getTotalRevenue();
@@ -35,8 +39,12 @@ export class AdminService {
     };
   }
 
-  async listUsers(query: any) {
-    return this.usersService.findAll();
+  async listUsers(adminId: string, query: any) {
+    const allUsers = await this.usersService.findAll();
+    // Loại bỏ admin hiện tại ra khỏi danh sách
+    return Array.isArray(allUsers) 
+      ? allUsers.filter(user => user.id !== adminId)
+      : [];
   }
 
   async getUserById(id: string) {

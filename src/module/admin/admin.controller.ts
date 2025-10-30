@@ -1,4 +1,4 @@
-import { Controller, Get, Body, Patch, Param, Delete, UseGuards, Query } from '@nestjs/common';
+import { Controller, Get, Body, Patch, Param, Delete, UseGuards, Query, Req } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags, ApiOkResponse } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt.auth.guard';
 import { RolesGuard } from '../auth/guards/RolesGuard';
@@ -7,6 +7,7 @@ import { Role } from '../../common/enums/role.enum';
 import { AdminService } from './admin.service';
 import { AssignRoleDto } from '../User/dto/assign-role.dto';
 import { ResetPasswordDto } from '../User/dto/reset-password';
+import { GetUser } from '../../decorator/getuser.decorator';
 
 @Controller('admin')
 @ApiTags('Admin')
@@ -15,6 +16,13 @@ import { ResetPasswordDto } from '../User/dto/reset-password';
 @Roles(Role.ADMIN)
 export class AdminController {
   constructor(private readonly adminService: AdminService) {}
+
+  // Admin Profile
+  @Get('me')
+  @ApiOkResponse({ description: 'Lấy thông tin profile của admin đang đăng nhập' })
+  async getAdminProfile(@GetUser() user: any) {
+    return this.adminService.getAdminProfile(user.id || user.userId || user.sub);
+  }
 
   // Dashboard
   @Get('dashboard')
@@ -25,9 +33,10 @@ export class AdminController {
 
   // User Management
   @Get('users')
-  @ApiOkResponse({ description: 'Lấy danh sách tất cả users' })
-  async getAllUsers(@Query() query: any) {
-    return this.adminService.listUsers(query);
+  @ApiOkResponse({ description: 'Lấy danh sách tất cả users (không bao gồm admin hiện tại)' })
+  async getAllUsers(@GetUser() user: any, @Query() query: any) {
+    const adminId = user.id || user.userId || user.sub;
+    return this.adminService.listUsers(adminId, query);
   }
 
   @Get('users/:id')

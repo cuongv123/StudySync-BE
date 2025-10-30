@@ -22,15 +22,20 @@ const role_enum_1 = require("../../common/enums/role.enum");
 const admin_service_1 = require("./admin.service");
 const assign_role_dto_1 = require("../User/dto/assign-role.dto");
 const reset_password_1 = require("../User/dto/reset-password");
+const getuser_decorator_1 = require("../../decorator/getuser.decorator");
 let AdminController = class AdminController {
     constructor(adminService) {
         this.adminService = adminService;
     }
+    async getAdminProfile(user) {
+        return this.adminService.getAdminProfile(user.id || user.userId || user.sub);
+    }
     async getDashboard() {
         return this.adminService.getDashboard();
     }
-    async getAllUsers(query) {
-        return this.adminService.listUsers(query);
+    async getAllUsers(user, query) {
+        const adminId = user.id || user.userId || user.sub;
+        return this.adminService.listUsers(adminId, query);
     }
     async getUserById(id) {
         return this.adminService.getUserById(id);
@@ -53,6 +58,14 @@ let AdminController = class AdminController {
 };
 exports.AdminController = AdminController;
 __decorate([
+    (0, common_1.Get)('me'),
+    (0, swagger_1.ApiOkResponse)({ description: 'Lấy thông tin profile của admin đang đăng nhập' }),
+    __param(0, (0, getuser_decorator_1.GetUser)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], AdminController.prototype, "getAdminProfile", null);
+__decorate([
     (0, common_1.Get)('dashboard'),
     (0, swagger_1.ApiOkResponse)({ description: 'Lấy thống kê tổng quan cho admin dashboard' }),
     __metadata("design:type", Function),
@@ -61,10 +74,11 @@ __decorate([
 ], AdminController.prototype, "getDashboard", null);
 __decorate([
     (0, common_1.Get)('users'),
-    (0, swagger_1.ApiOkResponse)({ description: 'Lấy danh sách tất cả users' }),
-    __param(0, (0, common_1.Query)()),
+    (0, swagger_1.ApiOkResponse)({ description: 'Lấy danh sách tất cả users (không bao gồm admin hiện tại)' }),
+    __param(0, (0, getuser_decorator_1.GetUser)()),
+    __param(1, (0, common_1.Query)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
+    __metadata("design:paramtypes", [Object, Object]),
     __metadata("design:returntype", Promise)
 ], AdminController.prototype, "getAllUsers", null);
 __decorate([

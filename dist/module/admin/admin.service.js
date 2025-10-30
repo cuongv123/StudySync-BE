@@ -29,6 +29,9 @@ let AdminService = class AdminService {
         this.userSubscriptionRepository = userSubscriptionRepository;
         this.planRepository = planRepository;
     }
+    async getAdminProfile(adminId) {
+        return this.usersService.findOne(adminId);
+    }
     async getDashboard() {
         var _a, _b;
         const totalUsers = await this.usersService.findAll();
@@ -42,8 +45,11 @@ let AdminService = class AdminService {
             reviewStats: reviewStats || {},
         };
     }
-    async listUsers(query) {
-        return this.usersService.findAll();
+    async listUsers(adminId, query) {
+        const allUsers = await this.usersService.findAll();
+        return Array.isArray(allUsers)
+            ? allUsers.filter(user => user.id !== adminId)
+            : [];
     }
     async getUserById(id) {
         return this.usersService.findOne(id);
