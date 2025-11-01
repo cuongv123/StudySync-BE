@@ -15,6 +15,24 @@ dotenv.config({ path: envFilePath });
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  
+  // CORS Configuration
+  app.enableCors({
+    origin: [
+      'https://studysync.id.vn',
+      'https://www.studysync.id.vn',
+    ],
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    credentials: true,
+    allowedHeaders: [
+      'Content-Type',
+      'Authorization',
+      'X-Requested-With',
+      'Accept',
+      'Origin',
+    ],
+  });
+  
   // Global Prefix
   app.setGlobalPrefix('/api/v1');
   // Global Filter

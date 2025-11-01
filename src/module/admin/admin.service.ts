@@ -41,7 +41,6 @@ export class AdminService {
 
   async listUsers(adminId: string, query: any) {
     const allUsers = await this.usersService.findAll();
-    // Loại bỏ admin hiện tại ra khỏi danh sách
     return Array.isArray(allUsers) 
       ? allUsers.filter(user => user.id !== adminId)
       : [];
