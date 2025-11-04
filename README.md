@@ -5,254 +5,436 @@
   <img src="https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript" />
   <img src="https://img.shields.io/badge/PostgreSQL-316192?style=for-the-badge&logo=postgresql&logoColor=white" alt="PostgreSQL" />
   <img src="https://img.shields.io/badge/Supabase-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white" alt="Supabase" />
+  <img src="https://img.shields.io/badge/Socket.io-010101?style=for-the-badge&logo=socket.io&logoColor=white" alt="Socket.io" />
 </p>
+
+<p align="center">
+  <a href="https://studysync-be.onrender.com/api-docs">📖 API Documentation</a> •
+  <a href="https://studysync.id.vn">🌐 Live Demo</a>
+</p>
+
+---
 
 ## 🎯 Tổng quan
 
-**StudySync** là một nền tảng học tập nhóm hiện đại, cho phép sinh viên tạo và tham gia các nhóm học tập, chia sẻ kiến thức và cùng nhau phát triển. Hệ thống được xây dựng với NestJS, TypeScript và PostgreSQL.
+**StudySync** là nền tảng học tập nhóm thông minh dành cho sinh viên Việt Nam, giúp tổ chức học nhóm hiệu quả với các công cụ hiện đại như chat realtime, video call, file sharing và AI chatbot hỗ trợ học tập 24/7.
 
 ### ✨ Tính năng chính
 
-- 🔐 **Xác thực & Phân quyền**: Đăng ký, đăng nhập với JWT và OTP verification
-- 👥 **Quản lý nhóm học tập**: Tạo, tham gia và quản lý nhóm học tập
-- 📧 **Mời thành viên**: Gửi lời mời qua email với hệ thống thông báo
-- 💬 **Chat realtime**: Trò chuyện trong nhóm với WebSocket
-- 🎥 **Video meeting**: Họp nhóm tích hợp Azure/AWS
-- 🔔 **Thông báo realtime**: Cập nhật tin tức nhóm ngay lập tức
-- 📊 **Dashboard quản lý**: Theo dõi hoạt động và thống kê
+#### 🔐 **Authentication & Authorization**
+- Đăng ký/Đăng nhập với JWT tokens
+- Email verification với OTP (6 chữ số)
+- Forgot password & reset password
+- Role-based access control (USER, ADMIN)
+- Refresh token rotation
 
-## 🚀 Bắt đầu nhanh
+#### 👥 **Study Groups Management**
+- Tạo và quản lý nhóm học tập không giới hạn
+- Invite members qua email
+- Join/Leave group
+- Transfer leadership
+- Member management (kick, assign roles)
+- Group settings & privacy
 
-### Yêu cầu hệ thống
+#### 💬 **Real-time Chat**
+- Chat realtime với WebSocket (Socket.io)
+- Group chat với typing indicators
+- Message history & pagination
+- Edit/Delete messages
+- File/Image sharing trong chat
+
+#### 🎥 **Video Call**
+- Video call HD với WebRTC
+- Screen sharing để thuyết trình
+- Recording (Pro Max plan)
+- Call history & statistics
+
+#### 📁 **File Management**
+- Personal storage: 100MB (Free) → 5GB (Pro Max)
+- Group storage với shared access
+- Upload/Download files
+- Folder structure
+- Storage quota tracking
+
+#### ✅ **Task Management**
+- Tạo và assign tasks cho members
+- Set deadline & priority
+- Track progress (TODO, IN_PROGRESS, DONE)
+- Task notifications
+
+#### 🤖 **AI Chatbot**
+- Gemini AI integration
+- System prompt với knowledge base riêng về StudySync
+- Usage limit theo subscription plan
+- Chat history
+
+#### 💳 **Subscription & Payment**
+- 3 gói: Free, Pro (49k), Pro Max (99k)
+- PayOS integration (QR Banking)
+- Webhook auto-activation
+- Payment history
+
+#### 🔔 **Notifications**
+- Realtime notifications qua WebSocket
+- 12 loại thông báo (invite, message, leadership...)
+- Read/Unread tracking
+- Push notifications
+
+#### 👨‍💼 **Admin Dashboard**
+- User management (CRUD)
+- Revenue & subscription statistics
+- System monitoring
+- Admin-only APIs
+
+---
+
+## 🚀 Quick Start
+
+### Prerequisites
 
 - Node.js ≥ 18.0.0
 - npm ≥ 8.0.0
 - PostgreSQL ≥ 14
 
-### Cài đặt
+### Installation
 
 ```bash
 # Clone repository
 git clone https://github.com/cuongv123/StudySync-BE.git
 cd StudySync-BE
 
-# Cài đặt dependencies
+# Install dependencies
 npm install
 
-# Cấu hình môi trường
+# Setup environment
 cp .env.example .env
+# Edit .env with your configuration
 ```
 
-### Cấu hình môi trường (.env)
+### Environment Variables
 
 ```env
 # App Configuration
 PORT=3000
 NODE_ENV=development
+APP_URL=https://studysync-be.onrender.com
 
-# Database (Supabase)
+# Database (Supabase PostgreSQL)
 DATABASE_URL=postgresql://user:password@host:port/database
+DB_HOST=aws-0-ap-southeast-1.pooler.supabase.com
+DB_PORT=6543
+DB_USERNAME=postgres
+DB_PASSWORD=your_password
+DB_NAME=postgres
 
 # JWT Authentication
-JWT_SECRET=your_super_secret_key
+JWT_SECRET=your_super_secret_jwt_key_here
 JWT_EXPIRES_IN=1d
+REFRESH_TOKEN_SECRET=your_refresh_token_secret
+REFRESH_TOKEN_EXPIRES_IN=7d
 
-# Email Service
+# Email Service (Gmail SMTP)
 MAIL_HOST=smtp.gmail.com
 MAIL_PORT=587
 MAIL_USER=your_email@gmail.com
 MAIL_PASSWORD=your_app_password
-MAIL_FROM=noreply@studysync.com
-
-# Frontend URL
-FRONTEND_URL=http://localhost:3000
+MAIL_FROM=StudySync <noreply@studysync.com>
 
 # OTP Configuration
 OTP_EXPIRY_MINUTES=15
 
-# Swagger Documentation
+# PayOS Payment Gateway
+PAYOS_CLIENT_ID=your_client_id
+PAYOS_API_KEY=your_api_key
+PAYOS_CHECKSUM_KEY=your_checksum_key
+
+# Gemini AI
+GEMINI_API_KEY=your_gemini_api_key
+
+# CORS
+FRONTEND_URL=https://studysync.id.vn
+
+# Swagger
 SWAGGER_USER=admin
 SWAGGER_PASSWORD=admin123
 ```
 
-### Chạy ứng dụng
+### Database Setup
 
 ```bash
-# Development
+# Run migrations
+npm run migration:run
+
+# Generate migration
+npm run migration:generate -- src/Database/migrations/MigrationName
+
+# Revert migration
+npm run migration:revert
+```
+
+### Run Application
+
+```bash
+# Development (hot reload)
 npm run start:dev
 
-# Production
+# Production build
 npm run build
 npm run start:prod
 
-# Migration
-npm run migration:run
+# Debug mode
+npm run start:debug
 ```
+
+### Testing
+
+```bash
+# Unit tests
+npm run test
+
+# E2E tests
+npm run test:e2e
+
+# Test coverage
+npm run test:cov
+```
+
+---
 
 ## 📖 API Documentation
 
-API Documentation có sẵn tại: `http://localhost:3000/api-docs`
+### 🌐 Swagger UI
+- **Local:** http://localhost:3000/api-docs
+- **Production:** https://studysync-be.onrender.com/api-docs
 
-### Endpoints chính
+### 📋 API Endpoints Summary
 
-#### 🔐 Authentication
-- `POST /api/v1/auth/register` - Đăng ký tài khoản
-- `POST /api/v1/auth/login` - Đăng nhập
-- `POST /api/v1/auth/verify-email` - Xác thực email
-- `POST /api/v1/auth/forgot-password` - Quên mật khẩu
-- `POST /api/v1/auth/refresh` - Refresh token
+| Module | Endpoints | Description |
+|--------|-----------|-------------|
+| **Auth** | 8 endpoints | Register, Login, OTP, Password reset |
+| **Groups** | 12 endpoints | CRUD groups, members, invitations |
+| **Chat** | 5 endpoints + WebSocket | Realtime messaging |
+| **Files** | 6 endpoints | Upload, download, folders |
+| **Tasks** | 7 endpoints | Task management |
+| **Video Call** | 5 endpoints + WebSocket | Video conferencing |
+| **Payment** | 6 endpoints | PayOS integration |
+| **AI Chat** | 6 endpoints | Gemini AI chatbot |
+| **Notifications** | 8 endpoints + WebSocket | Realtime notifications |
+| **Admin** | 9 endpoints | Admin dashboard |
+| **Users** | 3 endpoints | User profile |
 
-#### 👥 Study Groups
-- `GET /api/v1/groups` - Lấy danh sách nhóm của user
-- `POST /api/v1/groups` - Tạo nhóm mới
-- `GET /api/v1/groups/:id` - Chi tiết nhóm
-- `POST /api/v1/groups/:id/invite` - Mời thành viên
-- `POST /api/v1/groups/invite/:inviteId/accept` - Chấp nhận lời mời
+**Total:** 75+ REST endpoints + WebSocket events
 
-#### 👤 User Management
-- `GET /api/v1/users/me` - Thông tin user hiện tại
-- `PATCH /api/v1/users/me/password` - Đổi mật khẩu
+---
 
-#### 🛡️ Admin
-- `GET /api/v1/admin` - Danh sách users (Admin only)
-- `DELETE /api/v1/admin/:id` - Xóa user (Admin only)
+## 🗄️ Database Schema
 
-## 🗄️ Cấu trúc Database
+### Key Tables
 
-### Bảng chính
+```sql
+users                      # 11 columns
+study_groups              # 10 columns
+group_members             # 6 columns
+group_invitations         # 8 columns
+messages                  # 8 columns
+files                     # 14 columns
+tasks                     # 11 columns
+video_calls               # 9 columns
+call_participants         # 7 columns
+subscription_plans        # 9 columns
+user_subscriptions        # 12 columns
+payments                  # 13 columns
+notifications             # 9 columns
+ai_query_history          # 5 columns
+user_storage              # 4 columns
+group_storage             # 4 columns
+tokens                    # 6 columns
+```
 
-#### `users`
-- Thông tin người dùng, authentication
-- Roles: `USER`, `ADMIN`
-- Email verification với OTP
+**Relationships:**
+- Users → Groups (many-to-many via group_members)
+- Groups → Messages (one-to-many)
+- Groups → Files (one-to-many)
+- Groups → Tasks (one-to-many)
+- Users → Subscriptions → Plans
+- Users → Payments
+- Users → Notifications
 
-#### `study_groups`
-- Thông tin nhóm học tập
-- Người tạo (creator) và thành viên
+---
 
-#### `group_members`
-- Quan hệ nhiều-nhiều giữa users và groups
-- Status: `pending`, `accepted`, `rejected`
-- Role: `admin`, `member`
+## 🏗️ Tech Stack
 
-#### `group_invites`
-- Lời mời tham gia nhóm qua email
-- Trạng thái theo dõi lời mời
+### Backend
+- **Framework:** NestJS v11.x
+- **Language:** TypeScript v5.x
+- **Runtime:** Node.js v18+
 
-#### `tokens`
-- Quản lý JWT tokens và refresh tokens
+### Database
+- **Primary:** PostgreSQL v14+ (Supabase)
+- **ORM:** TypeORM
+- **Caching:** Redis (optional)
 
-## 🏗️ Kiến trúc hệ thống
+### Real-time
+- **WebSocket:** Socket.io
+- **Video:** WebRTC
+
+### External Services
+- **Payment:** PayOS (QR Banking)
+- **AI:** Google Gemini
+- **Email:** Nodemailer (Gmail SMTP)
+- **Hosting:** Render.com
+
+### Tools
+- **API Docs:** Swagger/OpenAPI
+- **Testing:** Jest
+- **Validation:** class-validator
+- **Security:** JWT, bcrypt, CORS
+
+---
+
+## 📁 Project Structure
 
 ```
 src/
-├── module/
-│   ├── auth/           # Authentication & Authorization
-│   ├── User/           # User management
-│   ├── study-group/    # Study group functionality
-│   ├── mail/           # Email service
-│   └── token/          # Token management
-├── common/
-│   ├── enums/          # Enumerations
-│   ├── filters/        # Exception filters
-│   └── interceptors/   # Request/Response interceptors
-├── configs/            # Configuration files
-├── Database/
-│   ├── migrations/     # Database migrations
-│   └── data-source.ts  # TypeORM configuration
-└── decorator/          # Custom decorators
+├── main.ts                          # Entry point
+├── app.module.ts                    # Root module
+├── common/                          # Shared utilities
+│   ├── auth/
+│   ├── decorators/
+│   ├── enums/
+│   ├── filters/
+│   ├── interceptors/
+│   └── interfaces/
+├── configs/                         # Configuration
+├── Database/                        # Migrations
+└── module/                          # Features
+    ├── auth/
+    ├── User/
+    ├── admin/
+    ├── group/
+    ├── chat/
+    ├── file/
+    ├── task/
+    ├── video-call/
+    ├── notification/
+    ├── subscription/
+    ├── payment/
+    └── ai-chat/
 ```
 
-## 🔧 Scripts hữu ích
+---
 
-```bash
-# Development
-npm run start:dev        # Chạy dev server với hot reload
-npm run build           # Build production
-npm run start:prod      # Chạy production server
+## 🔐 Security
 
-# Database
-npm run migration:generate  # Tạo migration mới
-npm run migration:run      # Chạy migrations
-npm run migration:revert   # Rollback migration
+✅ JWT with refresh tokens  
+✅ Password hashing (bcrypt)  
+✅ Email verification (OTP)  
+✅ RBAC (Role-Based Access Control)  
+✅ CORS configuration  
+✅ Request validation  
+✅ SQL injection prevention  
+✅ XSS protection  
+✅ HTTPS only in production  
 
-# Testing
-npm run test           # Unit tests
-npm run test:e2e       # End-to-end tests
-npm run test:cov       # Test coverage
-
-# Code Quality
-npm run lint           # ESLint
-npm run format         # Prettier formatting
-```
+---
 
 ## 🚀 Deployment
 
-### Supabase Database
-1. Tạo project trên [Supabase](https://supabase.com)
-2. Copy connection string vào `DATABASE_URL`
-3. Chạy migrations: `npm run migration:run`
+### Production (Render.com)
 
-### Production Server
 ```bash
-# Build application
-npm run build
+# Auto-deploy from GitHub (dev branch)
+# Manual deploy:
+git push origin dev
 
-# Start production server
-npm run start:prod
-
-# PM2 (recommended)
-npm install -g pm2
-pm2 start dist/main.js --name studysync-api
-pm2 save
-pm2 startup
+# Environment: Set all .env vars in Render dashboard
+# Build: npm run build
+# Start: npm run start:prod
 ```
 
-## 🛠️ Tech Stack
+### Health Check
 
-- **Framework**: NestJS 11.x
-- **Language**: TypeScript
-- **Database**: PostgreSQL (Supabase)
-- **ORM**: TypeORM
-- **Authentication**: JWT + Passport
-- **Email**: Nodemailer + Gmail SMTP
-- **Documentation**: Swagger/OpenAPI
-- **Validation**: class-validator
-- **Testing**: Jest
+```bash
+GET https://studysync-be.onrender.com/api/v1/health
+```
 
-## 🤝 Đóng góp
+---
+
+## 🧪 Testing
+
+```bash
+# All tests
+npm test
+
+# Watch mode
+npm run test:watch
+
+# Coverage
+npm run test:cov
+```
+
+---
+
+## 📊 Monitoring
+
+- Request/Response logging (LoggingInterceptor)
+- Error tracking (AllExceptionsFilter)
+- Performance metrics
+- Database query logging
+
+---
+
+## 🤝 Contributing
 
 1. Fork repository
-2. Tạo feature branch: `git checkout -b feature/amazing-feature`
-3. Commit changes: `git commit -m 'Add amazing feature'`
-4. Push to branch: `git push origin feature/amazing-feature`
-5. Tạo Pull Request
+2. Create feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit changes (`git commit -m 'feat: Add amazing feature'`)
+4. Push to branch (`git push origin feature/amazing-feature`)
+5. Open Pull Request
 
-## 📝 Roadmap
+### Commit Convention
 
-- [ ] 💬 **Chat realtime** với WebSocket
-- [ ] 🎥 **Video meeting** integration
-- [ ] 🔔 **Push notifications**
-- [ ] 📊 **Analytics dashboard**
-- [ ] 🌐 **Multi-language support**
-- [ ] 📱 **Mobile app API**
-- [ ] 🔍 **Advanced search & filters**
-- [ ] 🎨 **Themes & customization**
+```
+feat: New feature
+fix: Bug fix
+docs: Documentation
+style: Formatting
+refactor: Code refactoring
+test: Add tests
+chore: Maintenance
+```
+
+---
+
+## 📞 Contact
+
+- **Website:** [studysync.id.vn](https://studysync.id.vn)
+- **API Docs:** [studysync-be.onrender.com/api-docs](https://studysync-be.onrender.com/api-docs)
+- **GitHub:** [cuongv123/StudySync-BE](https://github.com/cuongv123/StudySync-BE)
+- **Email:** cuongshyn2003@gmail.com
+
+---
 
 ## 📄 License
 
-Dự án này được phân phối dưới giấy phép [MIT License](LICENSE).
+MIT License - see LICENSE file
 
-## 📞 Liên hệ
+---
 
-- Email: support@studysync.com
-- Website: https://studysync.com
-- StudySync BackEnd Team
+## 🙏 Acknowledgments
+
+- NestJS Team
+- Supabase
+- PayOS
+- Google Gemini
+- FPT University - EXE201
 
 ---
 
 <p align="center">
-  Made with ❤️ for the student community 
+  Made with ❤️ by StudySync Team
 </p>
 
-THIS FILE CAN BE UPDATE IN THE FUTURE , COMMING SOON !! THANK YOU 
+<p align="center">
+  <sub>Built for EXE201 - Software Engineering Project</sub>
+</p>
