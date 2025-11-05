@@ -12,6 +12,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.AiQueryHistory = void 0;
 const typeorm_1 = require("typeorm");
 const User_entity_1 = require("../../User/entities/User.entity");
+const conversation_entity_1 = require("./conversation.entity");
 let AiQueryHistory = class AiQueryHistory {
 };
 exports.AiQueryHistory = AiQueryHistory;
@@ -23,6 +24,10 @@ __decorate([
     (0, typeorm_1.Column)({ type: 'uuid' }),
     __metadata("design:type", String)
 ], AiQueryHistory.prototype, "userId", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'uuid', nullable: true }),
+    __metadata("design:type", String)
+], AiQueryHistory.prototype, "conversationId", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'text' }),
     __metadata("design:type", String)
@@ -40,6 +45,11 @@ __decorate([
     (0, typeorm_1.JoinColumn)({ name: 'userId' }),
     __metadata("design:type", User_entity_1.User)
 ], AiQueryHistory.prototype, "user", void 0);
+__decorate([
+    (0, typeorm_1.ManyToOne)(() => conversation_entity_1.Conversation, (conversation) => conversation.messages, { onDelete: 'CASCADE' }),
+    (0, typeorm_1.JoinColumn)({ name: 'conversationId' }),
+    __metadata("design:type", conversation_entity_1.Conversation)
+], AiQueryHistory.prototype, "conversation", void 0);
 exports.AiQueryHistory = AiQueryHistory = __decorate([
     (0, typeorm_1.Entity)('ai_query_history')
 ], AiQueryHistory);

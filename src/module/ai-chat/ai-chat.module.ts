@@ -3,12 +3,14 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AiChatController } from './ai-chat.controller';
 import { AiChatService } from './ai-chat.service';
 import { AiQueryHistory } from './entities/ai-query-history.entity';
+import { Conversation } from './entities/conversation.entity';
 import { UserSubscription } from '../subscription/entities/user-subscription.entity';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([
       AiQueryHistory,
+      Conversation,
       UserSubscription,
     ]),
   ],

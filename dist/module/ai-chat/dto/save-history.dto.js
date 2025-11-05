@@ -17,6 +17,16 @@ class SaveHistoryDto {
 exports.SaveHistoryDto = SaveHistoryDto;
 __decorate([
     (0, swagger_1.ApiProperty)({
+        description: 'Conversation ID (optional for first message, required for subsequent messages)',
+        example: '123e4567-e89b-12d3-a456-426614174000',
+        required: false
+    }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsUUID)(),
+    __metadata("design:type", String)
+], SaveHistoryDto.prototype, "conversationId", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({
         description: 'User query text',
         example: 'Giải thích cho tôi về React hooks'
     }),

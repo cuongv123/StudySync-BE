@@ -51,12 +51,13 @@ const file_entity_1 = require("../module/file/entities/file.entity");
 const user_storage_entity_1 = require("../module/file/entities/user-storage.entity");
 const group_storage_entity_1 = require("../module/file/entities/group-storage.entity");
 const ai_query_history_entity_1 = require("../module/ai-chat/entities/ai-query-history.entity");
+const conversation_entity_1 = require("../module/ai-chat/entities/conversation.entity");
 const review_entity_1 = require("../module/review/entities/review.entity");
 dotenv.config({ path: '.env' });
 exports.AppDataSource = new typeorm_1.DataSource({
     type: 'postgres',
     url: process.env.DATABASE_URL,
-    entities: [User_entity_1.User, token_entity_1.Token, group_entity_1.StudyGroup, group_member_entity_1.GroupMember, group_invitation_entity_1.GroupInvitation, notification_entity_1.Notification, task_entity_1.Task, message_entity_1.Message, subscription_plan_entity_1.SubscriptionPlan, user_subscription_entity_1.UserSubscription, subscription_payment_entity_1.SubscriptionPayment, file_entity_1.File, user_storage_entity_1.UserStorage, group_storage_entity_1.GroupStorage, ai_query_history_entity_1.AiQueryHistory, review_entity_1.Review],
+    entities: [User_entity_1.User, token_entity_1.Token, group_entity_1.StudyGroup, group_member_entity_1.GroupMember, group_invitation_entity_1.GroupInvitation, notification_entity_1.Notification, task_entity_1.Task, message_entity_1.Message, subscription_plan_entity_1.SubscriptionPlan, user_subscription_entity_1.UserSubscription, subscription_payment_entity_1.SubscriptionPayment, file_entity_1.File, user_storage_entity_1.UserStorage, group_storage_entity_1.GroupStorage, ai_query_history_entity_1.AiQueryHistory, conversation_entity_1.Conversation, review_entity_1.Review],
     migrations: [__dirname + '/migrations/*{.ts,.js}'],
     synchronize: false,
     logging: true,
