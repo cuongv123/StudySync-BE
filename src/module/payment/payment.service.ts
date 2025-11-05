@@ -64,9 +64,20 @@ export class PaymentService {
     }
 
     // Generate unique order code (only numbers for PayOS)
-    const orderCode = Number(Date.now().toString() + Math.floor(Math.random() * 1000).toString());
+    // PayOS yêu cầu orderCode phải là số và không quá 17 chữ số
+    const timestamp = Date.now().toString();
+    const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+    const orderCodeStr = timestamp.slice(-14) + random; // Lấy 14 số cuối của timestamp + 3 số random = 17 số
+    const orderCode = Number(orderCodeStr);
     
-    this.logger.log(`Generated orderCode: ${orderCode}`);
+    this.logger.log(`Generated orderCode: ${orderCode} (length: ${orderCodeStr.length})`);
+    this.logger.log(`User info for payment: ${JSON.stringify(userInfo)}`);
+    this.logger.log(`Plan details: ${plan.planName}, Price: ${plan.price}`);
+
+    // Validate price
+    if (!plan.price || plan.price <= 0) {
+      throw new BadRequestException('Invalid plan price');
+    }
 
     // Create payment record
     const payment = this.paymentRepository.create({
@@ -80,10 +91,13 @@ export class PaymentService {
 
     // Create PayOS payment link
     try {
+      // PayOS yêu cầu description tối đa 25 ký tự
+      const description = `${plan.planName} - ${plan.durationDays}d`.slice(0, 25);
+      
       const paymentLink = await this.payosService.createPaymentLink({
         orderCode: orderCode.toString(),
         amount: plan.price,
-        description: `Subscription: ${plan.planName} - ${plan.durationDays} days`,
+        description: description,
         buyerName: userInfo.name || 'Guest',
         buyerEmail: userInfo.email || 'guest@studysync.com',
         buyerPhone: userInfo.phone || '0000000000',
@@ -115,8 +129,15 @@ export class PaymentService {
       payment.status = PaymentStatus.CANCELLED;
       await this.paymentRepository.save(payment);
       
-      this.logger.error(`Failed to create payment link: ${error.message}`);
-      throw new BadRequestException('Failed to create payment link');
+      // Log đầy đủ thông tin lỗi từ PayOS
+      this.logger.error(`Failed to create payment link for orderCode ${orderCode}`);
+      this.logger.error(`Error message: ${error.message}`);
+      this.logger.error(`Error details: ${JSON.stringify(error?.response?.data || error)}`);
+      this.logger.error(`Stack trace: ${error.stack}`);
+      
+      // Trả về lỗi chi tiết hơn
+      const errorMessage = error.message || 'Unknown error from PayOS';
+      throw new BadRequestException(`Failed to create payment link: ${errorMessage}`);
     }
   }
 

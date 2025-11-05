@@ -15,12 +15,15 @@ import { SubscriptionPayment } from '../module/subscription/entities/subscriptio
 import { File } from '../module/file/entities/file.entity';
 import { UserStorage } from '../module/file/entities/user-storage.entity';
 import { GroupStorage } from '../module/file/entities/group-storage.entity';
+import { AiQueryHistory } from '../module/ai-chat/entities/ai-query-history.entity';
+import { Conversation } from '../module/ai-chat/entities/conversation.entity';
+import { Review } from '../module/review/entities/review.entity';
 dotenv.config({ path: '.env' });
 
 export const AppDataSource = new DataSource({
   type: 'postgres',
   url: process.env.DATABASE_URL, // sử dụng connection string Supabase
-  entities: [User, Token, StudyGroup, GroupMember, GroupInvitation, Notification, Task, Message, SubscriptionPlan, UserSubscription, SubscriptionPayment, File, UserStorage, GroupStorage], // 
+  entities: [User, Token, StudyGroup, GroupMember, GroupInvitation, Notification, Task, Message, SubscriptionPlan, UserSubscription, SubscriptionPayment, File, UserStorage, GroupStorage, AiQueryHistory, Conversation, Review], // 
   migrations: [__dirname + '/migrations/*{.ts,.js}'],
   synchronize: false, // tắt vì bạn dùng migrations
   logging: true,

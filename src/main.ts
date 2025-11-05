@@ -15,6 +15,24 @@ dotenv.config({ path: envFilePath });
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  
+  // CORS Configuration
+  app.enableCors({
+    origin: [
+      'https://studysync.id.vn',
+      'https://www.studysync.id.vn',
+    ],
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    credentials: true,
+    allowedHeaders: [
+      'Content-Type',
+      'Authorization',
+      'X-Requested-With',
+      'Accept',
+      'Origin',
+    ],
+  });
+  
   // Global Prefix
   app.setGlobalPrefix('/api/v1');
   // Global Filter
@@ -38,11 +56,6 @@ async function bootstrap() {
   // Config Swagger
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api-docs', app, document);
-  // CORS Configuration
-  app.enableCors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:5173',
-    credentials: true,
-  });
   // Start Server
   await app.listen(process.env.PORT ?? 3000);
 }

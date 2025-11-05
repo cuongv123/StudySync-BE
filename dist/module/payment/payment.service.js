@@ -32,6 +32,7 @@ let PaymentService = PaymentService_1 = class PaymentService {
         this.logger = new common_1.Logger(PaymentService_1.name);
     }
     async createSubscriptionPayment(userId, planId, userInfo) {
+        var _a;
         const plan = await this.planRepository.findOne({
             where: { id: planId, isActive: true },
         });
@@ -56,8 +57,16 @@ let PaymentService = PaymentService_1 = class PaymentService {
                 this.logger.log(`User ${userId} upgrading from ${existingSub.plan.planName} to ${plan.planName}`);
             }
         }
-        const orderCode = Number(Date.now().toString() + Math.floor(Math.random() * 1000).toString());
-        this.logger.log(`Generated orderCode: ${orderCode}`);
+        const timestamp = Date.now().toString();
+        const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+        const orderCodeStr = timestamp.slice(-14) + random;
+        const orderCode = Number(orderCodeStr);
+        this.logger.log(`Generated orderCode: ${orderCode} (length: ${orderCodeStr.length})`);
+        this.logger.log(`User info for payment: ${JSON.stringify(userInfo)}`);
+        this.logger.log(`Plan details: ${plan.planName}, Price: ${plan.price}`);
+        if (!plan.price || plan.price <= 0) {
+            throw new common_1.BadRequestException('Invalid plan price');
+        }
         const payment = this.paymentRepository.create({
             userId,
             planId,
@@ -67,10 +76,11 @@ let PaymentService = PaymentService_1 = class PaymentService {
         });
         await this.paymentRepository.save(payment);
         try {
+            const description = `${plan.planName} - ${plan.durationDays}d`.slice(0, 25);
             const paymentLink = await this.payosService.createPaymentLink({
                 orderCode: orderCode.toString(),
                 amount: plan.price,
-                description: `Subscription: ${plan.planName} - ${plan.durationDays} days`,
+                description: description,
                 buyerName: userInfo.name || 'Guest',
                 buyerEmail: userInfo.email || 'guest@studysync.com',
                 buyerPhone: userInfo.phone || '0000000000',
@@ -98,8 +108,12 @@ let PaymentService = PaymentService_1 = class PaymentService {
         catch (error) {
             payment.status = subscription_payment_entity_1.PaymentStatus.CANCELLED;
             await this.paymentRepository.save(payment);
-            this.logger.error(`Failed to create payment link: ${error.message}`);
-            throw new common_1.BadRequestException('Failed to create payment link');
+            this.logger.error(`Failed to create payment link for orderCode ${orderCode}`);
+            this.logger.error(`Error message: ${error.message}`);
+            this.logger.error(`Error details: ${JSON.stringify(((_a = error === null || error === void 0 ? void 0 : error.response) === null || _a === void 0 ? void 0 : _a.data) || error)}`);
+            this.logger.error(`Stack trace: ${error.stack}`);
+            const errorMessage = error.message || 'Unknown error from PayOS';
+            throw new common_1.BadRequestException(`Failed to create payment link: ${errorMessage}`);
         }
     }
     async handlePaymentWebhook(webhookData) {
