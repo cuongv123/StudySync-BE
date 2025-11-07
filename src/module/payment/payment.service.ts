@@ -277,15 +277,53 @@ export class PaymentService {
     try {
       this.logger.log(`Fetching transaction info from PayOS for order: ${orderCode}`);
       
-      // Get transaction info from PayOS
-      const payosInfo = await this.payosService.getPaymentInfo(orderCode);
-      
-      // Get payment record from database
+      // Get payment record from database first
       const payment = await this.paymentRepository.findOne({
         where: { orderCode: orderCode },
         relations: ['plan'],
       });
 
+      // If payment not found in database, return error immediately
+      if (!payment) {
+        this.logger.error(`Payment not found in database for order: ${orderCode}`);
+        throw new NotFoundException('Mã thanh toán không tồn tại trong hệ thống. Vui lòng tạo payment mới.');
+      }
+
+      // Try to get transaction info from PayOS
+      let payosInfo = null;
+      try {
+        payosInfo = await this.payosService.getPaymentInfo(orderCode);
+      } catch (payosError: any) {
+        // Log PayOS error but still return database info
+        this.logger.warn(`PayOS API error for order ${orderCode}: ${payosError.message}`);
+        
+        // If PayOS returns "không tồn tại" (code 101), payment might be expired or cancelled
+        if (payosError.message?.includes('không tồn tại') || payosError.message?.includes('code: 101')) {
+          this.logger.warn(`Payment link expired or cancelled on PayOS for order: ${orderCode}`);
+          
+          // Return database info only
+          return {
+            orderCode: payment.orderCode,
+            amount: payment.amount,
+            status: 'EXPIRED_OR_NOT_FOUND_ON_PAYOS',
+            message: 'Payment link không tồn tại trên PayOS (có thể đã hết hạn hoặc bị hủy). Vui lòng tạo payment mới.',
+            paymentRecord: {
+              id: payment.id,
+              userId: payment.userId,
+              planId: payment.planId,
+              planName: payment.plan?.planName,
+              status: payment.status,
+              paidAt: payment.paidAt,
+              createdAt: payment.createdAt,
+            },
+          };
+        }
+        
+        // Other PayOS errors, rethrow
+        throw payosError;
+      }
+
+      // Success: Return full info from both PayOS and database
       return {
         // PayOS transaction info
         orderCode: payosInfo.orderCode,
@@ -301,7 +339,7 @@ export class PaymentService {
         transactions: payosInfo.transactions || [],
         
         // Database payment info
-        paymentRecord: payment ? {
+        paymentRecord: {
           id: payment.id,
           userId: payment.userId,
           planId: payment.planId,
@@ -309,11 +347,19 @@ export class PaymentService {
           status: payment.status,
           paidAt: payment.paidAt,
           createdAt: payment.createdAt,
-        } : null,
+        },
       };
     } catch (error: any) {
       this.logger.error(`Failed to get transaction info: ${error.message}`);
-      throw new NotFoundException(`Transaction not found: ${error.message}`);
+      
+      // Return user-friendly error message
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      
+      throw new NotFoundException(
+        `Không thể lấy thông tin thanh toán. Lỗi: ${error.message || 'Unknown error'}`
+      );
     }
   }
 
