@@ -85,6 +85,30 @@ let PaymentController = PaymentController_1 = class PaymentController {
             timestamp: new Date().toISOString(),
         };
     }
+    async getPaymentSuccessInfo(req, orderCode) {
+        var _a;
+        try {
+            const payment = await this.paymentService.getPaymentByOrderCode(orderCode);
+            return {
+                data: {
+                    orderCode: payment.orderCode,
+                    planName: (_a = payment.plan) === null || _a === void 0 ? void 0 : _a.planName,
+                    amount: payment.amount,
+                    status: payment.status,
+                    paidAt: payment.paidAt,
+                    createdAt: payment.createdAt,
+                    paymentMethod: payment.paymentMethod,
+                },
+                statusCode: 200,
+                message: 'Payment information retrieved successfully',
+                timestamp: new Date().toISOString(),
+            };
+        }
+        catch (error) {
+            this.logger.error('Get payment success info error:', error.message);
+            throw new common_1.BadRequestException(error.message || 'Không tìm thấy thông tin thanh toán');
+        }
+    }
     async getTransactionDetails(req, orderCode) {
         try {
             const transactionInfo = await this.paymentService.getPayOSTransactionInfo(orderCode);
@@ -97,6 +121,22 @@ let PaymentController = PaymentController_1 = class PaymentController {
         }
         catch (error) {
             this.logger.error('Get transaction error:', error.message);
+            throw new common_1.BadRequestException(error.message);
+        }
+    }
+    async cancelPayment(req, orderCode) {
+        var _a, _b, _c;
+        try {
+            const userId = ((_a = req.user) === null || _a === void 0 ? void 0 : _a.id) || ((_b = req.user) === null || _b === void 0 ? void 0 : _b.userId) || ((_c = req.user) === null || _c === void 0 ? void 0 : _c.sub);
+            await this.paymentService.cancelPayment(userId, orderCode);
+            return {
+                statusCode: 200,
+                message: 'Payment cancelled successfully',
+                timestamp: new Date().toISOString(),
+            };
+        }
+        catch (error) {
+            this.logger.error('Cancel payment error:', error.message);
             throw new common_1.BadRequestException(error.message);
         }
     }
@@ -139,8 +179,8 @@ __decorate([
     (0, common_1.Get)('detail'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     (0, swagger_1.ApiBearerAuth)('JWT-auth'),
-    (0, swagger_1.ApiOperation)({ summary: 'Get payment details by order code' }),
-    (0, swagger_1.ApiResponse)({ status: 200, description: 'Returns payment details' }),
+    (0, swagger_1.ApiOperation)({ summary: 'Get payment details by order code (from database only)' }),
+    (0, swagger_1.ApiResponse)({ status: 200, description: 'Returns payment details from database' }),
     __param(0, (0, common_1.Request)()),
     __param(1, (0, common_1.Query)('orderCode')),
     __metadata("design:type", Function),
@@ -148,17 +188,44 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], PaymentController.prototype, "getPaymentByOrderCode", null);
 __decorate([
+    (0, common_1.Get)('success/:orderCode'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, swagger_1.ApiBearerAuth)('JWT-auth'),
+    (0, swagger_1.ApiOperation)({ summary: 'Get payment info for success page from database' }),
+    (0, swagger_1.ApiResponse)({ status: 200, description: 'Returns payment info for success page' }),
+    __param(0, (0, common_1.Request)()),
+    __param(1, (0, common_1.Param)('orderCode')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, String]),
+    __metadata("design:returntype", Promise)
+], PaymentController.prototype, "getPaymentSuccessInfo", null);
+__decorate([
     (0, common_1.Get)('transaction/:orderCode'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     (0, swagger_1.ApiBearerAuth)('JWT-auth'),
-    (0, swagger_1.ApiOperation)({ summary: 'Get transaction details from PayOS' }),
+    (0, swagger_1.ApiOperation)({
+        summary: 'Get transaction details from PayOS ',
+        description: 'This endpoint calls PayOS API. Use /payments/success/:orderCode for payment success page instead.'
+    }),
     (0, swagger_1.ApiResponse)({ status: 200, description: 'Returns full transaction info from PayOS gateway' }),
     __param(0, (0, common_1.Request)()),
-    __param(1, (0, common_1.Query)('orderCode')),
+    __param(1, (0, common_1.Param)('orderCode')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object, String]),
     __metadata("design:returntype", Promise)
 ], PaymentController.prototype, "getTransactionDetails", null);
+__decorate([
+    (0, common_1.Post)('cancel/:orderCode'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, swagger_1.ApiBearerAuth)('JWT-auth'),
+    (0, swagger_1.ApiOperation)({ summary: 'Cancel a pending payment' }),
+    (0, swagger_1.ApiResponse)({ status: 200, description: 'Payment cancelled successfully' }),
+    __param(0, (0, common_1.Request)()),
+    __param(1, (0, common_1.Param)('orderCode')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, String]),
+    __metadata("design:returntype", Promise)
+], PaymentController.prototype, "cancelPayment", null);
 exports.PaymentController = PaymentController = PaymentController_1 = __decorate([
     (0, swagger_1.ApiTags)('Payments'),
     (0, common_1.Controller)('payments'),

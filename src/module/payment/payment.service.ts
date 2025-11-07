@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, LessThan } from 'typeorm';
+import { Cron, CronExpression } from '@nestjs/schedule';
 import { SubscriptionPayment, PaymentStatus } from '../subscription/entities/subscription-payment.entity';
 import { SubscriptionPlan } from '../subscription/entities/subscription-plan.entity';
 import { UserSubscription, SubscriptionStatus } from '../subscription/entities/user-subscription.entity';
@@ -372,15 +373,100 @@ export class PaymentService {
       const isValid = this.payosService.verifyWebhookSignature(webhookData);
       
       if (isValid) {
-        this.logger.log('✅ Webhook signature verified successfully');
+        this.logger.log(' Webhook signature verified successfully');
       } else {
-        this.logger.warn('❌ Invalid webhook signature');
+        this.logger.warn(' Invalid webhook signature');
       }
       
       return isValid;
     } catch (error: any) {
       this.logger.error(`Failed to verify webhook signature: ${error.message}`);
       return false;
+    }
+  }
+
+  /**
+   * Cancel payment by user
+   * Only allows cancelling PENDING payments
+   */
+  async cancelPayment(userId: string, orderCode: string) {
+    // Find payment
+    const payment = await this.paymentRepository.findOne({
+      where: { orderCode },
+    });
+
+    if (!payment) {
+      throw new NotFoundException('Payment not found');
+    }
+
+    // Check ownership
+    if (payment.userId !== userId) {
+      throw new BadRequestException('You are not authorized to cancel this payment');
+    }
+
+    // Only allow cancelling PENDING payments
+    if (payment.status !== PaymentStatus.PENDING) {
+      throw new BadRequestException(`Cannot cancel payment with status: ${payment.status}`);
+    }
+
+    // Try to cancel on PayOS
+    try {
+      await this.payosService.cancelPaymentLink(orderCode, 'Cancelled by user');
+      this.logger.log(` Payment link cancelled on PayOS: ${orderCode}`);
+    } catch (error: any) {
+      // If PayOS cancel fails (e.g., payment already expired), just log warning
+      this.logger.warn(` Failed to cancel on PayOS (may already be expired): ${error.message}`);
+    }
+
+    // Update status in database
+    payment.status = PaymentStatus.CANCELLED;
+    await this.paymentRepository.save(payment);
+
+    this.logger.log(` Payment cancelled by user ${userId}: ${orderCode}`);
+    return { message: 'Payment cancelled successfully' };
+  }
+
+  /**
+   * Cron job: Tự động expire payments quá 15 phút
+   * Chạy mỗi 5 phút
+   */
+  @Cron(CronExpression.EVERY_5_MINUTES)
+  async expireOldPendingPayments() {
+    try {
+      this.logger.log(' Running cron job: Expire old pending payments');
+      
+      // Tính thời gian 15 phút trước
+      const fifteenMinutesAgo = new Date();
+      fifteenMinutesAgo.setMinutes(fifteenMinutesAgo.getMinutes() - 15);
+      
+      // Tìm tất cả payments PENDING quá 15 phút
+      const expiredPayments = await this.paymentRepository.find({
+        where: {
+          status: PaymentStatus.PENDING,
+          createdAt: LessThan(fifteenMinutesAgo),
+        },
+      });
+      
+      if (expiredPayments.length === 0) {
+        this.logger.log(' No expired payments found');
+        return;
+      }
+      
+      // Update status thành EXPIRED (không phải CANCELLED)
+      const orderCodes = expiredPayments.map(p => p.orderCode);
+      await this.paymentRepository.update(
+        { 
+          status: PaymentStatus.PENDING,
+          createdAt: LessThan(fifteenMinutesAgo)
+        },
+        { 
+          status: PaymentStatus.EXPIRED 
+        }
+      );
+      
+      this.logger.log(` Expired ${expiredPayments.length} pending payments: ${orderCodes.join(', ')}`);
+    } catch (error: any) {
+      this.logger.error(` Failed to expire old payments: ${error.message}`);
     }
   }
 }

@@ -189,4 +189,25 @@ export class PaymentController {
       throw new BadRequestException(error.message);
     }
   }
+
+  @Post('cancel/:orderCode')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'Cancel a pending payment' })
+  @ApiResponse({ status: 200, description: 'Payment cancelled successfully' })
+  async cancelPayment(@Request() req, @Param('orderCode') orderCode: string) {
+    try {
+      const userId = req.user?.id || req.user?.userId || req.user?.sub;
+      await this.paymentService.cancelPayment(userId, orderCode);
+      
+      return {
+        statusCode: 200,
+        message: 'Payment cancelled successfully',
+        timestamp: new Date().toISOString(),
+      };
+    } catch (error: any) {
+      this.logger.error('Cancel payment error:', error.message);
+      throw new BadRequestException(error.message);
+    }
+  }
 }
