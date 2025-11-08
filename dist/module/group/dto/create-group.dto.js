@@ -36,4 +36,16 @@ __decorate([
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], CreateGroupDto.prototype, "description", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({
+        description: 'Mã môn học',
+        example: 'MATH101',
+        required: false,
+        maxLength: 50,
+    }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.MaxLength)(50, { message: 'Mã môn học không được vượt quá 50 ký tự' }),
+    __metadata("design:type", String)
+], CreateGroupDto.prototype, "subject", void 0);
 //# sourceMappingURL=create-group.dto.js.map

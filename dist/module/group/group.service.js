@@ -16,6 +16,7 @@ exports.GroupService = void 0;
 const common_1 = require("@nestjs/common");
 const typeorm_1 = require("@nestjs/typeorm");
 const typeorm_2 = require("typeorm");
+const schedule_1 = require("@nestjs/schedule");
 const group_entity_1 = require("./entities/group.entity");
 const group_member_entity_1 = require("./entities/group-member.entity");
 const group_invitation_entity_1 = require("./entities/group-invitation.entity");
@@ -652,8 +653,30 @@ let GroupService = class GroupService {
             await queryRunner.release();
         }
     }
+    async expireOldInvitations() {
+        const now = new Date();
+        const expiredInvitations = await this.invitationRepository.find({
+            where: {
+                status: group_invitation_entity_1.InvitationStatus.PENDING,
+                expiresAt: (0, typeorm_2.LessThan)(now),
+            },
+        });
+        if (expiredInvitations.length > 0) {
+            await this.invitationRepository.update({
+                status: group_invitation_entity_1.InvitationStatus.PENDING,
+                expiresAt: (0, typeorm_2.LessThan)(now),
+            }, { status: group_invitation_entity_1.InvitationStatus.EXPIRED });
+            console.log(`[CRON] Expired ${expiredInvitations.length} invitation(s):`, expiredInvitations.map((inv) => inv.id).join(', '));
+        }
+    }
 };
 exports.GroupService = GroupService;
+__decorate([
+    (0, schedule_1.Cron)(schedule_1.CronExpression.EVERY_HOUR),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", Promise)
+], GroupService.prototype, "expireOldInvitations", null);
 exports.GroupService = GroupService = __decorate([
     (0, common_1.Injectable)(),
     __param(0, (0, typeorm_1.InjectRepository)(group_entity_1.StudyGroup)),

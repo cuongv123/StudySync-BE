@@ -20,4 +20,15 @@ export class CreateGroupDto {
   @IsOptional()
   @IsString()
   description?: string;
+
+  @ApiProperty({
+    description: 'Mã môn học',
+    example: 'MATH101',
+    required: false,
+    maxLength: 50,
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(50, { message: 'Mã môn học không được vượt quá 50 ký tự' })
+  subject?: string;
 }

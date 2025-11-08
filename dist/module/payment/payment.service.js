@@ -310,12 +310,12 @@ let PaymentService = PaymentService_1 = class PaymentService {
     async expireOldPendingPayments() {
         try {
             this.logger.log(' Running cron job: Expire old pending payments');
-            const fifteenMinutesAgo = new Date();
-            fifteenMinutesAgo.setMinutes(fifteenMinutesAgo.getMinutes() - 15);
+            const fiveMinutesAgo = new Date();
+            fiveMinutesAgo.setMinutes(fiveMinutesAgo.getMinutes() - 5);
             const expiredPayments = await this.paymentRepository.find({
                 where: {
                     status: subscription_payment_entity_1.PaymentStatus.PENDING,
-                    createdAt: (0, typeorm_2.LessThan)(fifteenMinutesAgo),
+                    createdAt: (0, typeorm_2.LessThan)(fiveMinutesAgo),
                 },
             });
             if (expiredPayments.length === 0) {
@@ -325,7 +325,7 @@ let PaymentService = PaymentService_1 = class PaymentService {
             const orderCodes = expiredPayments.map(p => p.orderCode);
             await this.paymentRepository.update({
                 status: subscription_payment_entity_1.PaymentStatus.PENDING,
-                createdAt: (0, typeorm_2.LessThan)(fifteenMinutesAgo)
+                createdAt: (0, typeorm_2.LessThan)(fiveMinutesAgo)
             }, {
                 status: subscription_payment_entity_1.PaymentStatus.EXPIRED
             });
