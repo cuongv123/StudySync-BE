@@ -427,7 +427,7 @@ export class PaymentService {
   }
 
   /**
-   * Cron job: Tự động expire payments quá 15 phút
+   * Cron job: Tự động expire payments quá 5 phút
    * Chạy mỗi 5 phút
    */
   @Cron(CronExpression.EVERY_5_MINUTES)
@@ -435,15 +435,15 @@ export class PaymentService {
     try {
       this.logger.log(' Running cron job: Expire old pending payments');
       
-      // Tính thời gian 15 phút trước
-      const fifteenMinutesAgo = new Date();
-      fifteenMinutesAgo.setMinutes(fifteenMinutesAgo.getMinutes() - 15);
+      // Tính thời gian 5 phút trước
+      const fiveMinutesAgo = new Date();
+      fiveMinutesAgo.setMinutes(fiveMinutesAgo.getMinutes() - 5);
       
-      // Tìm tất cả payments PENDING quá 15 phút
+      // Tìm tất cả payments PENDING quá 5 phút
       const expiredPayments = await this.paymentRepository.find({
         where: {
           status: PaymentStatus.PENDING,
-          createdAt: LessThan(fifteenMinutesAgo),
+          createdAt: LessThan(fiveMinutesAgo),
         },
       });
       
@@ -457,7 +457,7 @@ export class PaymentService {
       await this.paymentRepository.update(
         { 
           status: PaymentStatus.PENDING,
-          createdAt: LessThan(fifteenMinutesAgo)
+          createdAt: LessThan(fiveMinutesAgo)
         },
         { 
           status: PaymentStatus.EXPIRED 

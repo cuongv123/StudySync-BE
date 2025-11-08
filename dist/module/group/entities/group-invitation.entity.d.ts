@@ -3,8 +3,8 @@ import { StudyGroup } from './group.entity';
 export declare enum InvitationStatus {
     PENDING = "pending",
     ACCEPTED = "accepted",
-    DECLINED = "declined",
-    CANCELLED = "cancelled"
+    REJECTED = "rejected",
+    EXPIRED = "expired"
 }
 export declare class GroupInvitation {
     id: number;
@@ -12,6 +12,7 @@ export declare class GroupInvitation {
     inviterId: string;
     groupId: number;
     status: InvitationStatus;
+    message: string;
     invitedAt: Date;
     respondedAt: Date;
     expiresAt: Date;

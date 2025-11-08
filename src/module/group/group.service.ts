@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, DataSource } from 'typeorm';
+import { Repository, DataSource, LessThan } from 'typeorm';
+import { Cron, CronExpression } from '@nestjs/schedule';
 import { StudyGroup } from './entities/group.entity';
 import { GroupMember, MemberRole } from './entities/group-member.entity';
 import { GroupInvitation, InvitationStatus } from './entities/group-invitation.entity';
@@ -225,6 +226,8 @@ export class GroupService {
       groupId,
       inviteEmail: memberEmail,
       inviterId: leaderId,
+      message: message, // Save the message
+      expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // Expires in 1 day
     });
 
     const savedInvitation = await this.invitationRepository.save(invitation);
@@ -304,6 +307,8 @@ export class GroupService {
       groupId,
       inviteEmail: user.email, 
       inviterId: userId, // User tự gửi request
+      message: message, // Save the message
+      expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // Expires in 1 day
     });
 
     const savedRequest = await this.invitationRepository.save(joinRequest);
@@ -357,7 +362,7 @@ export class GroupService {
 
       if (memberCount >= 6) {
         // Revert invitation if group is full
-        invitation.status = InvitationStatus.DECLINED;
+        invitation.status = InvitationStatus.REJECTED;
         await this.invitationRepository.save(invitation);
         throw new ForbiddenException('Nhóm đã đầy, không thể tham gia');
       }
@@ -530,7 +535,7 @@ export class GroupService {
     }
 
     const whereCondition = type === 'received' 
-      ? { inviteEmail: user.email, status: 'pending' as InvitationStatus }
+      ? { inviteEmail: user.email, status: InvitationStatus.PENDING }
       : { inviterId: userId };
 
     const invitations = await this.invitationRepository.find({
@@ -579,7 +584,7 @@ export class GroupService {
     const joinRequests = await this.invitationRepository.find({
       where: { 
         groupId, 
-        status: 'pending' as InvitationStatus 
+        status: InvitationStatus.PENDING 
       },
       order: { invitedAt: 'DESC' }
     });
@@ -601,7 +606,8 @@ export class GroupService {
           requesterEmail: user.email,
           requesterId: user.id,
           requestedAt: request.invitedAt,
-          status: request.status
+          status: request.status,
+          message: request.message // Add message to response
         });
       }
     }
@@ -612,7 +618,7 @@ export class GroupService {
   async approveJoinRequest(requestId: number, leaderId: string) {
     // 1. Tìm join request
     const joinRequest = await this.invitationRepository.findOne({
-      where: { id: requestId, status: 'pending' as InvitationStatus }
+      where: { id: requestId, status: InvitationStatus.PENDING }
     });
 
     if (!joinRequest) {
@@ -655,7 +661,7 @@ export class GroupService {
     await this.memberRepository.save(newMember);
 
     // 6. Cập nhật status của join request
-    joinRequest.status = 'accepted' as InvitationStatus;
+    joinRequest.status = InvitationStatus.ACCEPTED;
     joinRequest.respondedAt = new Date();
     await this.invitationRepository.save(joinRequest);
 
@@ -702,7 +708,7 @@ export class GroupService {
   async denyJoinRequest(requestId: number, leaderId: string) {
     // 1. Tìm join request
     const joinRequest = await this.invitationRepository.findOne({
-      where: { id: requestId, status: 'pending' as InvitationStatus }
+      where: { id: requestId, status: InvitationStatus.PENDING }
     });
 
     if (!joinRequest) {
@@ -728,7 +734,7 @@ export class GroupService {
     }
 
     // 4. Cập nhật status của join request
-    joinRequest.status = 'declined' as InvitationStatus;
+    joinRequest.status = InvitationStatus.REJECTED;
     joinRequest.respondedAt = new Date();
     await this.invitationRepository.save(joinRequest);
 
@@ -915,6 +921,31 @@ export class GroupService {
       throw error;
     } finally {
       await queryRunner.release();
+    }
+  }
+
+  @Cron(CronExpression.EVERY_HOUR)
+  async expireOldInvitations() {
+    const now = new Date();
+    const expiredInvitations = await this.invitationRepository.find({
+      where: {
+        status: InvitationStatus.PENDING,
+        expiresAt: LessThan(now),
+      },
+    });
+
+    if (expiredInvitations.length > 0) {
+      await this.invitationRepository.update(
+        {
+          status: InvitationStatus.PENDING,
+          expiresAt: LessThan(now),
+        },
+        { status: InvitationStatus.EXPIRED },
+      );
+      console.log(
+        `[CRON] Expired ${expiredInvitations.length} invitation(s):`,
+        expiredInvitations.map((inv) => inv.id).join(', '),
+      );
     }
   }
 }

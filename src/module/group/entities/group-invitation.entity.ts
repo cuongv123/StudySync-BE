@@ -13,8 +13,8 @@ import { StudyGroup } from './group.entity';
 export enum InvitationStatus {
   PENDING = 'pending',
   ACCEPTED = 'accepted',
-  DECLINED = 'declined',
-  CANCELLED = 'cancelled'
+  REJECTED = 'rejected',
+  EXPIRED = 'expired'
 }
 
 @Entity('group_invitations')
@@ -39,7 +39,8 @@ export class GroupInvitation {
   })
   status: InvitationStatus;
 
-
+  @Column({ type: 'text', nullable: true, name: 'message' })
+  message: string;
 
   @CreateDateColumn({ name: 'invitedAt' })
   invitedAt: Date;
