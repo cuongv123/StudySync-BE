@@ -14,6 +14,7 @@ export declare class GroupController {
         id: number;
         groupName: string;
         description: string;
+        subject: string;
         leaderId: string;
         storageLimitMb: number;
         totalStorageUsedMb: number;

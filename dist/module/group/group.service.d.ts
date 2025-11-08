@@ -21,6 +21,7 @@ export declare class GroupService {
         id: number;
         groupName: string;
         description: string;
+        subject: string;
         leaderId: string;
         storageLimitMb: number;
         totalStorageUsedMb: number;
@@ -112,4 +113,5 @@ export declare class GroupService {
             groupName: string;
         };
     }>;
+    expireOldInvitations(): Promise<void>;
 }

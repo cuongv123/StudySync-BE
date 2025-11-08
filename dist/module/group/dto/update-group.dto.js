@@ -36,4 +36,15 @@ __decorate([
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], UpdateGroupDto.prototype, "description", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({
+        description: 'Mã môn học mới',
+        example: 'MATH102',
+        required: false,
+    }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.MaxLength)(50),
+    __metadata("design:type", String)
+], UpdateGroupDto.prototype, "subject", void 0);
 //# sourceMappingURL=update-group.dto.js.map

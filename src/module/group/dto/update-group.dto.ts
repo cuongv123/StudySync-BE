@@ -20,4 +20,14 @@ export class UpdateGroupDto {
   @IsOptional()
   @IsString()
   description?: string;
+
+  @ApiProperty({
+    description: 'Mã môn học mới',
+    example: 'MATH102',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(50)
+  subject?: string;
 }
