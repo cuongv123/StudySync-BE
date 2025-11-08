@@ -169,6 +169,8 @@ let GroupService = class GroupService {
             groupId,
             inviteEmail: memberEmail,
             inviterId: leaderId,
+            message: message,
+            expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
         });
         const savedInvitation = await this.invitationRepository.save(invitation);
         const group = await this.groupRepository.findOne({
@@ -220,6 +222,8 @@ let GroupService = class GroupService {
             groupId,
             inviteEmail: user.email,
             inviterId: userId,
+            message: message,
+            expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
         });
         const savedRequest = await this.invitationRepository.save(joinRequest);
         const requester = await this.userRepository.findOne({
@@ -250,7 +254,7 @@ let GroupService = class GroupService {
                 where: { groupId: invitation.groupId }
             });
             if (memberCount >= 6) {
-                invitation.status = group_invitation_entity_1.InvitationStatus.DECLINED;
+                invitation.status = group_invitation_entity_1.InvitationStatus.REJECTED;
                 await this.invitationRepository.save(invitation);
                 throw new common_1.ForbiddenException('Nhóm đã đầy, không thể tham gia');
             }
@@ -359,7 +363,7 @@ let GroupService = class GroupService {
             throw new common_1.NotFoundException('User không tồn tại');
         }
         const whereCondition = type === 'received'
-            ? { inviteEmail: user.email, status: 'pending' }
+            ? { inviteEmail: user.email, status: group_invitation_entity_1.InvitationStatus.PENDING }
             : { inviterId: userId };
         const invitations = await this.invitationRepository.find({
             where: whereCondition,
@@ -394,7 +398,7 @@ let GroupService = class GroupService {
         const joinRequests = await this.invitationRepository.find({
             where: {
                 groupId,
-                status: 'pending'
+                status: group_invitation_entity_1.InvitationStatus.PENDING
             },
             order: { invitedAt: 'DESC' }
         });
@@ -412,7 +416,8 @@ let GroupService = class GroupService {
                     requesterEmail: user.email,
                     requesterId: user.id,
                     requestedAt: request.invitedAt,
-                    status: request.status
+                    status: request.status,
+                    message: request.message
                 });
             }
         }
@@ -420,7 +425,7 @@ let GroupService = class GroupService {
     }
     async approveJoinRequest(requestId, leaderId) {
         const joinRequest = await this.invitationRepository.findOne({
-            where: { id: requestId, status: 'pending' }
+            where: { id: requestId, status: group_invitation_entity_1.InvitationStatus.PENDING }
         });
         if (!joinRequest) {
             throw new common_1.NotFoundException('Yêu cầu gia nhập không tồn tại hoặc đã được xử lý');
@@ -449,7 +454,7 @@ let GroupService = class GroupService {
             role: group_member_entity_1.MemberRole.MEMBER
         });
         await this.memberRepository.save(newMember);
-        joinRequest.status = 'accepted';
+        joinRequest.status = group_invitation_entity_1.InvitationStatus.ACCEPTED;
         joinRequest.respondedAt = new Date();
         await this.invitationRepository.save(joinRequest);
         await this.notificationService.createNotification({
@@ -480,7 +485,7 @@ let GroupService = class GroupService {
     }
     async denyJoinRequest(requestId, leaderId) {
         const joinRequest = await this.invitationRepository.findOne({
-            where: { id: requestId, status: 'pending' }
+            where: { id: requestId, status: group_invitation_entity_1.InvitationStatus.PENDING }
         });
         if (!joinRequest) {
             throw new common_1.NotFoundException('Yêu cầu gia nhập không tồn tại hoặc đã được xử lý');
@@ -497,7 +502,7 @@ let GroupService = class GroupService {
         if (!requester) {
             throw new common_1.NotFoundException('Người dùng không tồn tại');
         }
-        joinRequest.status = 'declined';
+        joinRequest.status = group_invitation_entity_1.InvitationStatus.REJECTED;
         joinRequest.respondedAt = new Date();
         await this.invitationRepository.save(joinRequest);
         await this.notificationService.createNotification({

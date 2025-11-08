@@ -17,8 +17,8 @@ var InvitationStatus;
 (function (InvitationStatus) {
     InvitationStatus["PENDING"] = "pending";
     InvitationStatus["ACCEPTED"] = "accepted";
-    InvitationStatus["DECLINED"] = "declined";
-    InvitationStatus["CANCELLED"] = "cancelled";
+    InvitationStatus["REJECTED"] = "rejected";
+    InvitationStatus["EXPIRED"] = "expired";
 })(InvitationStatus || (exports.InvitationStatus = InvitationStatus = {}));
 let GroupInvitation = class GroupInvitation {
 };
@@ -48,6 +48,10 @@ __decorate([
     }),
     __metadata("design:type", String)
 ], GroupInvitation.prototype, "status", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'text', nullable: true, name: 'message' }),
+    __metadata("design:type", String)
+], GroupInvitation.prototype, "message", void 0);
 __decorate([
     (0, typeorm_1.CreateDateColumn)({ name: 'invitedAt' }),
     __metadata("design:type", Date)

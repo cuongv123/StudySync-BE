@@ -4,6 +4,7 @@ import {
   Post,
   Body,
   Query,
+  Param,
   UseGuards,
   Request,
   BadRequestException,
@@ -123,8 +124,8 @@ export class PaymentController {
   @Get('detail')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth('JWT-auth')
-  @ApiOperation({ summary: 'Get payment details by order code' })
-  @ApiResponse({ status: 200, description: 'Returns payment details' })
+  @ApiOperation({ summary: 'Get payment details by order code (from database only)' })
+  @ApiResponse({ status: 200, description: 'Returns payment details from database' })
   async getPaymentByOrderCode(@Request() req, @Query('orderCode') orderCode: string) {
     return {
       data: await this.paymentService.getPaymentByOrderCode(orderCode),
@@ -134,12 +135,46 @@ export class PaymentController {
     };
   }
 
+  @Get('success/:orderCode')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'Get payment info for success page from database' })
+  @ApiResponse({ status: 200, description: 'Returns payment info for success page' })
+  async getPaymentSuccessInfo(@Request() req, @Param('orderCode') orderCode: string) {
+    try {
+      // Only query database, don't call PayOS (payment link already deleted after success)
+      const payment = await this.paymentService.getPaymentByOrderCode(orderCode);
+      
+      // Format response for frontend
+      return {
+        data: {
+          orderCode: payment.orderCode,
+          planName: payment.plan?.planName,
+          amount: payment.amount,
+          status: payment.status,
+          paidAt: payment.paidAt,
+          createdAt: payment.createdAt,
+          paymentMethod: payment.paymentMethod,
+        },
+        statusCode: 200,
+        message: 'Payment information retrieved successfully',
+        timestamp: new Date().toISOString(),
+      };
+    } catch (error: any) {
+      this.logger.error('Get payment success info error:', error.message);
+      throw new BadRequestException(error.message || 'Không tìm thấy thông tin thanh toán');
+    }
+  }
+
   @Get('transaction/:orderCode')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth('JWT-auth')
-  @ApiOperation({ summary: 'Get transaction details from PayOS' })
+  @ApiOperation({ 
+    summary: 'Get transaction details from PayOS ',
+    description: 'This endpoint calls PayOS API. Use /payments/success/:orderCode for payment success page instead.'
+  })
   @ApiResponse({ status: 200, description: 'Returns full transaction info from PayOS gateway' })
-  async getTransactionDetails(@Request() req, @Query('orderCode') orderCode: string) {
+  async getTransactionDetails(@Request() req, @Param('orderCode') orderCode: string) {
     try {
       const transactionInfo = await this.paymentService.getPayOSTransactionInfo(orderCode);
       
@@ -151,6 +186,27 @@ export class PaymentController {
       };
     } catch (error: any) {
       this.logger.error('Get transaction error:', error.message);
+      throw new BadRequestException(error.message);
+    }
+  }
+
+  @Post('cancel/:orderCode')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'Cancel a pending payment' })
+  @ApiResponse({ status: 200, description: 'Payment cancelled successfully' })
+  async cancelPayment(@Request() req, @Param('orderCode') orderCode: string) {
+    try {
+      const userId = req.user?.id || req.user?.userId || req.user?.sub;
+      await this.paymentService.cancelPayment(userId, orderCode);
+      
+      return {
+        statusCode: 200,
+        message: 'Payment cancelled successfully',
+        timestamp: new Date().toISOString(),
+      };
+    } catch (error: any) {
+      this.logger.error('Cancel payment error:', error.message);
       throw new BadRequestException(error.message);
     }
   }

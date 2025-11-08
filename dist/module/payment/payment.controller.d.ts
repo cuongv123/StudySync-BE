@@ -29,8 +29,42 @@ export declare class PaymentController {
         message: string;
         timestamp: string;
     }>;
+    getPaymentSuccessInfo(req: any, orderCode: string): Promise<{
+        data: {
+            orderCode: string;
+            planName: string;
+            amount: number;
+            status: string;
+            paidAt: Date;
+            createdAt: Date;
+            paymentMethod: string;
+        };
+        statusCode: number;
+        message: string;
+        timestamp: string;
+    }>;
     getTransactionDetails(req: any, orderCode: string): Promise<{
         data: {
+            orderCode: string;
+            amount: number;
+            status: string;
+            message: string;
+            paymentRecord: {
+                id: number;
+                userId: string;
+                planId: number;
+                planName: string;
+                status: string;
+                paidAt: Date;
+                createdAt: Date;
+            };
+            description?: undefined;
+            currency?: undefined;
+            paymentLinkId?: undefined;
+            checkoutUrl?: undefined;
+            qrCode?: undefined;
+            transactions?: undefined;
+        } | {
             orderCode: any;
             amount: any;
             description: any;
@@ -49,7 +83,13 @@ export declare class PaymentController {
                 paidAt: Date;
                 createdAt: Date;
             };
+            message?: undefined;
         };
+        statusCode: number;
+        message: string;
+        timestamp: string;
+    }>;
+    cancelPayment(req: any, orderCode: string): Promise<{
         statusCode: number;
         message: string;
         timestamp: string;

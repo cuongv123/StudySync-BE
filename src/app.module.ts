@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { ScheduleModule } from '@nestjs/schedule';
 import { DatabaseModule } from './Database/postgres.config';
 import { AuthModule } from './module/auth/auth.module';
 import { AdminModule } from './module/admin/admin.module';
@@ -18,6 +19,24 @@ import { ReviewModule } from './module/review/review.module';
 
 
 @Module({
-    imports: [DatabaseModule, AuthModule, AdminModule, UserModule, TokenModule, MailModule, GroupModule, NotificationModule, TaskModule, ChatModule, SubscriptionModule, PaymentModule, FileModule, VideoCallModule, AiChatModule, ReviewModule],
+    imports: [
+        ScheduleModule.forRoot(), // Enable cron jobs
+        DatabaseModule, 
+        AuthModule, 
+        AdminModule, 
+        UserModule, 
+        TokenModule, 
+        MailModule, 
+        GroupModule, 
+        NotificationModule, 
+        TaskModule, 
+        ChatModule, 
+        SubscriptionModule, 
+        PaymentModule, 
+        FileModule, 
+        VideoCallModule, 
+        AiChatModule, 
+        ReviewModule
+    ],
 })
 export class AppModule {}

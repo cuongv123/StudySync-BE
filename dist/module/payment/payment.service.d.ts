@@ -30,6 +30,26 @@ export declare class PaymentService {
     getUserPayments(userId: string): Promise<SubscriptionPayment[]>;
     getPaymentByOrderCode(orderCode: string): Promise<SubscriptionPayment>;
     getPayOSTransactionInfo(orderCode: string): Promise<{
+        orderCode: string;
+        amount: number;
+        status: string;
+        message: string;
+        paymentRecord: {
+            id: number;
+            userId: string;
+            planId: number;
+            planName: string;
+            status: string;
+            paidAt: Date;
+            createdAt: Date;
+        };
+        description?: undefined;
+        currency?: undefined;
+        paymentLinkId?: undefined;
+        checkoutUrl?: undefined;
+        qrCode?: undefined;
+        transactions?: undefined;
+    } | {
         orderCode: any;
         amount: any;
         description: any;
@@ -48,6 +68,11 @@ export declare class PaymentService {
             paidAt: Date;
             createdAt: Date;
         };
+        message?: undefined;
     }>;
     verifyWebhookSignature(webhookData: any): Promise<boolean>;
+    cancelPayment(userId: string, orderCode: string): Promise<{
+        message: string;
+    }>;
+    expireOldPendingPayments(): Promise<void>;
 }

@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, LessThan } from 'typeorm';
+import { Cron, CronExpression } from '@nestjs/schedule';
 import { SubscriptionPayment, PaymentStatus } from '../subscription/entities/subscription-payment.entity';
 import { SubscriptionPlan } from '../subscription/entities/subscription-plan.entity';
 import { UserSubscription, SubscriptionStatus } from '../subscription/entities/user-subscription.entity';
@@ -277,15 +278,53 @@ export class PaymentService {
     try {
       this.logger.log(`Fetching transaction info from PayOS for order: ${orderCode}`);
       
-      // Get transaction info from PayOS
-      const payosInfo = await this.payosService.getPaymentInfo(orderCode);
-      
-      // Get payment record from database
+      // Get payment record from database first
       const payment = await this.paymentRepository.findOne({
         where: { orderCode: orderCode },
         relations: ['plan'],
       });
 
+      // If payment not found in database, return error immediately
+      if (!payment) {
+        this.logger.error(`Payment not found in database for order: ${orderCode}`);
+        throw new NotFoundException('Mã thanh toán không tồn tại trong hệ thống. Vui lòng tạo payment mới.');
+      }
+
+      // Try to get transaction info from PayOS
+      let payosInfo = null;
+      try {
+        payosInfo = await this.payosService.getPaymentInfo(orderCode);
+      } catch (payosError: any) {
+        // Log PayOS error but still return database info
+        this.logger.warn(`PayOS API error for order ${orderCode}: ${payosError.message}`);
+        
+        // If PayOS returns "không tồn tại" (code 101), payment might be expired or cancelled
+        if (payosError.message?.includes('không tồn tại') || payosError.message?.includes('code: 101')) {
+          this.logger.warn(`Payment link expired or cancelled on PayOS for order: ${orderCode}`);
+          
+          // Return database info only
+          return {
+            orderCode: payment.orderCode,
+            amount: payment.amount,
+            status: 'EXPIRED_OR_NOT_FOUND_ON_PAYOS',
+            message: 'Payment link không tồn tại trên PayOS (có thể đã hết hạn hoặc bị hủy). Vui lòng tạo payment mới.',
+            paymentRecord: {
+              id: payment.id,
+              userId: payment.userId,
+              planId: payment.planId,
+              planName: payment.plan?.planName,
+              status: payment.status,
+              paidAt: payment.paidAt,
+              createdAt: payment.createdAt,
+            },
+          };
+        }
+        
+        // Other PayOS errors, rethrow
+        throw payosError;
+      }
+
+      // Success: Return full info from both PayOS and database
       return {
         // PayOS transaction info
         orderCode: payosInfo.orderCode,
@@ -301,7 +340,7 @@ export class PaymentService {
         transactions: payosInfo.transactions || [],
         
         // Database payment info
-        paymentRecord: payment ? {
+        paymentRecord: {
           id: payment.id,
           userId: payment.userId,
           planId: payment.planId,
@@ -309,11 +348,19 @@ export class PaymentService {
           status: payment.status,
           paidAt: payment.paidAt,
           createdAt: payment.createdAt,
-        } : null,
+        },
       };
     } catch (error: any) {
       this.logger.error(`Failed to get transaction info: ${error.message}`);
-      throw new NotFoundException(`Transaction not found: ${error.message}`);
+      
+      // Return user-friendly error message
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      
+      throw new NotFoundException(
+        `Không thể lấy thông tin thanh toán. Lỗi: ${error.message || 'Unknown error'}`
+      );
     }
   }
 
@@ -326,15 +373,100 @@ export class PaymentService {
       const isValid = this.payosService.verifyWebhookSignature(webhookData);
       
       if (isValid) {
-        this.logger.log('✅ Webhook signature verified successfully');
+        this.logger.log(' Webhook signature verified successfully');
       } else {
-        this.logger.warn('❌ Invalid webhook signature');
+        this.logger.warn(' Invalid webhook signature');
       }
       
       return isValid;
     } catch (error: any) {
       this.logger.error(`Failed to verify webhook signature: ${error.message}`);
       return false;
+    }
+  }
+
+  /**
+   * Cancel payment by user
+   * Only allows cancelling PENDING payments
+   */
+  async cancelPayment(userId: string, orderCode: string) {
+    // Find payment
+    const payment = await this.paymentRepository.findOne({
+      where: { orderCode },
+    });
+
+    if (!payment) {
+      throw new NotFoundException('Payment not found');
+    }
+
+    // Check ownership
+    if (payment.userId !== userId) {
+      throw new BadRequestException('You are not authorized to cancel this payment');
+    }
+
+    // Only allow cancelling PENDING payments
+    if (payment.status !== PaymentStatus.PENDING) {
+      throw new BadRequestException(`Cannot cancel payment with status: ${payment.status}`);
+    }
+
+    // Try to cancel on PayOS
+    try {
+      await this.payosService.cancelPaymentLink(orderCode, 'Cancelled by user');
+      this.logger.log(` Payment link cancelled on PayOS: ${orderCode}`);
+    } catch (error: any) {
+      // If PayOS cancel fails (e.g., payment already expired), just log warning
+      this.logger.warn(` Failed to cancel on PayOS (may already be expired): ${error.message}`);
+    }
+
+    // Update status in database
+    payment.status = PaymentStatus.CANCELLED;
+    await this.paymentRepository.save(payment);
+
+    this.logger.log(` Payment cancelled by user ${userId}: ${orderCode}`);
+    return { message: 'Payment cancelled successfully' };
+  }
+
+  /**
+   * Cron job: Tự động expire payments quá 5 phút
+   * Chạy mỗi 5 phút
+   */
+  @Cron(CronExpression.EVERY_5_MINUTES)
+  async expireOldPendingPayments() {
+    try {
+      this.logger.log(' Running cron job: Expire old pending payments');
+      
+      // Tính thời gian 5 phút trước
+      const fiveMinutesAgo = new Date();
+      fiveMinutesAgo.setMinutes(fiveMinutesAgo.getMinutes() - 5);
+      
+      // Tìm tất cả payments PENDING quá 5 phút
+      const expiredPayments = await this.paymentRepository.find({
+        where: {
+          status: PaymentStatus.PENDING,
+          createdAt: LessThan(fiveMinutesAgo),
+        },
+      });
+      
+      if (expiredPayments.length === 0) {
+        this.logger.log(' No expired payments found');
+        return;
+      }
+      
+      // Update status thành EXPIRED (không phải CANCELLED)
+      const orderCodes = expiredPayments.map(p => p.orderCode);
+      await this.paymentRepository.update(
+        { 
+          status: PaymentStatus.PENDING,
+          createdAt: LessThan(fiveMinutesAgo)
+        },
+        { 
+          status: PaymentStatus.EXPIRED 
+        }
+      );
+      
+      this.logger.log(` Expired ${expiredPayments.length} pending payments: ${orderCodes.join(', ')}`);
+    } catch (error: any) {
+      this.logger.error(` Failed to expire old payments: ${error.message}`);
     }
   }
 }
