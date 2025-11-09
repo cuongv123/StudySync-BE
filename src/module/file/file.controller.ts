@@ -14,7 +14,7 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { ApiTags, ApiOperation, ApiConsumes, ApiBody, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiConsumes, ApiBody, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { Response } from 'express';
 import { FileService } from './file.service';
 import { UploadFileDto } from './dto/upload-file.dto';
@@ -116,6 +116,20 @@ export class FileController {
 
   @Get('storage')
   @ApiOperation({ summary: 'Get storage information' })
+  @ApiQuery({ 
+    name: 'type', 
+    enum: FileType,
+    required: true,
+    description: 'Loại storage: "personal" (cá nhân) hoặc "group" (nhóm)',
+    example: FileType.PERSONAL,
+  })
+  @ApiQuery({ 
+    name: 'groupId', 
+    required: false,
+    description: 'ID của nhóm (BẮT BUỘC nếu type="group", bỏ trống nếu type="personal")',
+    example: null,
+    type: Number,
+  })
   async getStorageInfo(
     @Query('type') type: FileType,
     @Query('groupId', new ParseIntPipe({ optional: true })) groupId: number,

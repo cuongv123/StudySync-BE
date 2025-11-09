@@ -20,16 +20,17 @@ exports.UploadFileDto = UploadFileDto;
 __decorate([
     (0, swagger_1.ApiProperty)({
         enum: file_type_enum_1.FileType,
-        description: 'Loại file: personal (100MB) hoặc group (1GB)',
-        example: 'personal'
+        description: 'Loại file: "personal" (cá nhân - giới hạn 100MB) hoặc "group" (nhóm - giới hạn 1GB)',
+        example: file_type_enum_1.FileType.PERSONAL,
     }),
     (0, class_validator_1.IsEnum)(file_type_enum_1.FileType),
     __metadata("design:type", String)
 ], UploadFileDto.prototype, "type", void 0);
 __decorate([
     (0, swagger_1.ApiPropertyOptional)({
-        description: 'Group ID (bắt buộc nếu type=group)',
-        example: 7
+        description: 'ID của nhóm (BẮT BUỘC nếu type="group"). Bỏ trống nếu type="personal"',
+        example: 7,
+        nullable: true,
     }),
     (0, class_validator_1.IsOptional)(),
     (0, class_transformer_1.Type)(() => Number),
@@ -38,8 +39,9 @@ __decorate([
 ], UploadFileDto.prototype, "groupId", void 0);
 __decorate([
     (0, swagger_1.ApiPropertyOptional)({
-        description: 'Parent folder ID (để upload vào folder)',
-        example: 1
+        description: 'ID của folder cha (nếu muốn upload vào folder). Để trống nếu upload vào ROOT',
+        example: null,
+        nullable: true,
     }),
     (0, class_validator_1.IsOptional)(),
     (0, class_transformer_1.Type)(() => Number),
@@ -48,8 +50,9 @@ __decorate([
 ], UploadFileDto.prototype, "parentId", void 0);
 __decorate([
     (0, swagger_1.ApiPropertyOptional)({
-        description: 'Tên tùy chỉnh cho file',
-        maxLength: 255
+        description: 'Tên tùy chỉnh cho file (nếu không nhập sẽ dùng tên gốc)',
+        example: 'Tài liệu học tập.pdf',
+        maxLength: 255,
     }),
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),

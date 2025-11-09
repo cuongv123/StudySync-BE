@@ -290,12 +290,20 @@ export class AiChatService {
       relations: ['plan'],
     });
 
-    // Nếu không có subscription, coi như free plan
+    // Nếu không có subscription, lấy Free plan (id=1) từ database
     if (!subscription) {
+      const freePlan = await this.subscriptionRepo.manager
+        .getRepository('SubscriptionPlan')
+        .findOne({ where: { id: 1 } });
+      
+      const freeLimit = freePlan?.aiQueriesLimit || 5; // Default 5 nếu không tìm thấy
+      
       // Check số lượng queries đã dùng
       const count = await this.aiHistoryRepo.count({ where: { userId } });
-      if (count >= 50) { // Free plan limit
-        throw new BadRequestException('AI query limit reached. Please upgrade to Pro plan.');
+      if (count >= freeLimit) {
+        throw new BadRequestException(
+          `AI query limit reached (${freeLimit} queries for Free plan). Please upgrade to Pro or Pro Max plan.`
+        );
       }
       return;
     }
@@ -303,10 +311,11 @@ export class AiChatService {
     // Check limit theo plan
     const used = subscription.usageAiQueries || 0;
     const limit = subscription.plan.aiQueriesLimit;
+    const planName = subscription.plan.planName;
 
     if (used >= limit) {
       throw new BadRequestException(
-        `AI query limit reached (${limit} queries). Please upgrade your plan.`
+        `AI query limit reached (${limit} queries for ${planName} plan). Please upgrade your plan.`
       );
     }
   }

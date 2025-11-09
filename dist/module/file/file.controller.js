@@ -162,6 +162,20 @@ __decorate([
 __decorate([
     (0, common_1.Get)('storage'),
     (0, swagger_1.ApiOperation)({ summary: 'Get storage information' }),
+    (0, swagger_1.ApiQuery)({
+        name: 'type',
+        enum: file_type_enum_1.FileType,
+        required: true,
+        description: 'Loại storage: "personal" (cá nhân) hoặc "group" (nhóm)',
+        example: file_type_enum_1.FileType.PERSONAL,
+    }),
+    (0, swagger_1.ApiQuery)({
+        name: 'groupId',
+        required: false,
+        description: 'ID của nhóm (BẮT BUỘC nếu type="group", bỏ trống nếu type="personal")',
+        example: null,
+        type: Number,
+    }),
     __param(0, (0, common_1.Query)('type')),
     __param(1, (0, common_1.Query)('groupId', new common_1.ParseIntPipe({ optional: true }))),
     __param(2, (0, getuser_decorator_1.GetUser)('id')),

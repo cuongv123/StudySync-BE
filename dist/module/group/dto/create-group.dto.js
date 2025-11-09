@@ -29,7 +29,7 @@ __decorate([
 __decorate([
     (0, swagger_1.ApiProperty)({
         description: 'Mô tả về nhóm',
-        example: 'Nhóm học chung môn Toán cao cấp A1',
+        example: 'Nhóm học chung môn Toán cao cấp ',
         required: false,
     }),
     (0, class_validator_1.IsOptional)(),

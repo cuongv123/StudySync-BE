@@ -9,6 +9,7 @@ import { Repository } from 'typeorm';
 import { VideoCall } from './entities/video-call.entity';
 import { CallParticipant } from './entities/call-participant.entity';
 import { GroupMember } from '../group/entities/group-member.entity';
+import { UserSubscription } from '../subscription/entities/user-subscription.entity';
 import { CallStatus } from '../../common/enums/call-status.enum';
 import { StartCallDto } from './dto/start-call.dto';
 import { JoinCallDto } from './dto/join-call.dto';
@@ -22,6 +23,8 @@ export class VideoCallService {
     private participantRepository: Repository<CallParticipant>,
     @InjectRepository(GroupMember)
     private groupMemberRepository: Repository<GroupMember>,
+    @InjectRepository(UserSubscription)
+    private userSubscriptionRepository: Repository<UserSubscription>,
   ) {}
 
   async startCall(startCallDto: StartCallDto, userId: string): Promise<VideoCall> {
@@ -35,6 +38,9 @@ export class VideoCallService {
     if (!member) {
       throw new ForbiddenException('You are not a member of this group');
     }
+
+    // Check video call minutes limit
+    await this.checkVideoCallLimit(userId);
 
     // Check if there's already an ongoing call
     const existingCall = await this.videoCallRepository.findOne({
@@ -285,6 +291,56 @@ export class VideoCallService {
 
     for (const participant of activeParticipations) {
       await this.leaveCall(participant.callId, userId);
+    }
+  }
+
+  /**
+   * Check video call minutes limit based on subscription plan
+   */
+  private async checkVideoCallLimit(userId: string): Promise<void> {
+    const subscription = await this.userSubscriptionRepository.findOne({
+      where: { userId, isActive: true },
+      relations: ['plan'],
+    });
+
+    // Nếu không có subscription, lấy Free plan (id=1) từ database
+    if (!subscription) {
+      const freePlan = await this.userSubscriptionRepository.manager
+        .getRepository('SubscriptionPlan')
+        .findOne({ where: { id: 1 } });
+      
+      const freeLimit = freePlan?.videoCallMinutesLimit || 15; // Default 15 phút
+      
+      // Tính tổng số phút đã sử dụng
+      const calls = await this.videoCallRepository.find({
+        where: { startedBy: userId, status: CallStatus.ENDED },
+      });
+      
+      const usedMinutes = calls.reduce((total, call) => {
+        if (call.endedAt && call.startedAt) {
+          const duration = (call.endedAt.getTime() - call.startedAt.getTime()) / (1000 * 60);
+          return total + duration;
+        }
+        return total;
+      }, 0);
+      
+      if (usedMinutes >= freeLimit) {
+        throw new BadRequestException(
+          `Video call limit reached (${Math.round(usedMinutes)}/${freeLimit} minutes for Free plan). Please upgrade to Pro or Pro Max plan.`
+        );
+      }
+      return;
+    }
+
+    // Check limit theo plan
+    const used = subscription.usageVideoMinutes || 0;
+    const limit = subscription.plan.videoCallMinutesLimit;
+    const planName = subscription.plan.planName;
+
+    if (used >= limit) {
+      throw new BadRequestException(
+        `Video call limit reached (${Math.round(used)}/${limit} minutes for ${planName} plan). Please upgrade your plan or wait for monthly reset.`
+      );
     }
   }
 }

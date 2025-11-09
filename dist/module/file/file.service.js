@@ -53,18 +53,36 @@ const file_entity_1 = require("./entities/file.entity");
 const user_storage_entity_1 = require("./entities/user-storage.entity");
 const group_storage_entity_1 = require("./entities/group-storage.entity");
 const group_member_entity_1 = require("../group/entities/group-member.entity");
+const user_subscription_entity_1 = require("../subscription/entities/user-subscription.entity");
+const subscription_plan_entity_1 = require("../subscription/entities/subscription-plan.entity");
 const file_type_enum_1 = require("../../common/enums/file-type.enum");
 const fs = __importStar(require("fs"));
 const path = __importStar(require("path"));
 let FileService = class FileService {
-    constructor(fileRepository, userStorageRepository, groupStorageRepository, groupMemberRepository) {
+    constructor(fileRepository, userStorageRepository, groupStorageRepository, groupMemberRepository, userSubscriptionRepository, subscriptionPlanRepository) {
         this.fileRepository = fileRepository;
         this.userStorageRepository = userStorageRepository;
         this.groupStorageRepository = groupStorageRepository;
         this.groupMemberRepository = groupMemberRepository;
-        this.MAX_PERSONAL_SIZE = 104857600;
+        this.userSubscriptionRepository = userSubscriptionRepository;
+        this.subscriptionPlanRepository = subscriptionPlanRepository;
         this.MAX_GROUP_SIZE = 1073741824;
         this.UPLOAD_DIR = path.join(process.cwd(), 'uploads');
+    }
+    async getUserStorageLimit(userId) {
+        const subscription = await this.userSubscriptionRepository.findOne({
+            where: { userId, isActive: true },
+            relations: ['plan'],
+        });
+        if (!subscription) {
+            const freePlan = await this.userSubscriptionRepository.manager
+                .getRepository('SubscriptionPlan')
+                .findOne({ where: { id: 1 } });
+            const maxStorageMB = (freePlan === null || freePlan === void 0 ? void 0 : freePlan.personalStorageLimitMb) || 200;
+            return maxStorageMB * 1024 * 1024;
+        }
+        const maxStorageMB = subscription.plan.personalStorageLimitMb;
+        return maxStorageMB * 1024 * 1024;
     }
     async uploadFile(file, uploadDto, userId) {
         if (!file) {
@@ -77,11 +95,12 @@ let FileService = class FileService {
             await this.validateGroupMember(userId, uploadDto.groupId);
         }
         const maxSize = uploadDto.type === file_type_enum_1.FileType.PERSONAL
-            ? this.MAX_PERSONAL_SIZE
+            ? await this.getUserStorageLimit(userId)
             : this.MAX_GROUP_SIZE;
         if (file.size > maxSize) {
-            const limit = uploadDto.type === file_type_enum_1.FileType.PERSONAL ? '100MB' : '1GB';
-            throw new common_1.BadRequestException(`File size exceeds ${limit} limit for ${uploadDto.type} files`);
+            const limitMB = Math.round(maxSize / 1024 / 1024);
+            const fileSizeMB = Math.round(file.size / 1024 / 1024);
+            throw new common_1.BadRequestException(`File size (${fileSizeMB}MB) exceeds your plan's ${limitMB}MB limit. Please upgrade your plan or reduce file size.`);
         }
         await this.checkStorageQuota(userId, uploadDto.type, uploadDto.groupId, file.size);
         if (uploadDto.parentId) {
@@ -208,6 +227,24 @@ let FileService = class FileService {
     }
     async getStorageInfo(userId, type, groupId) {
         if (type === file_type_enum_1.FileType.PERSONAL) {
+            const subscription = await this.userSubscriptionRepository.findOne({
+                where: { userId, isActive: true },
+                relations: ['plan'],
+            });
+            let maxStorageMB;
+            let planName;
+            if (!subscription) {
+                const freePlan = await this.userSubscriptionRepository.manager
+                    .getRepository('SubscriptionPlan')
+                    .findOne({ where: { id: 1 } });
+                maxStorageMB = (freePlan === null || freePlan === void 0 ? void 0 : freePlan.personalStorageLimitMb) || 200;
+                planName = (freePlan === null || freePlan === void 0 ? void 0 : freePlan.planName) || 'Free';
+            }
+            else {
+                maxStorageMB = subscription.plan.personalStorageLimitMb;
+                planName = subscription.plan.planName;
+            }
+            const maxStorageBytes = maxStorageMB * 1024 * 1024;
             let storage = await this.userStorageRepository.findOne({
                 where: { userId },
             });
@@ -215,15 +252,23 @@ let FileService = class FileService {
                 storage = this.userStorageRepository.create({
                     userId,
                     usedSpace: 0,
-                    maxSpace: this.MAX_PERSONAL_SIZE,
+                    maxSpace: maxStorageBytes,
                 });
                 await this.userStorageRepository.save(storage);
+            }
+            else {
+                if (storage.maxSpace !== maxStorageBytes) {
+                    storage.maxSpace = maxStorageBytes;
+                    await this.userStorageRepository.save(storage);
+                }
             }
             return {
                 usedSpace: storage.usedSpace,
                 maxSpace: storage.maxSpace,
                 availableSpace: storage.availableSpace,
                 usedPercentage: storage.usedPercentage,
+                planName: planName,
+                storageLimitMB: maxStorageMB,
             };
         }
         else {
@@ -276,7 +321,9 @@ let FileService = class FileService {
         }
     }
     async checkStorageQuota(userId, type, groupId, fileSize) {
+        var _a;
         if (type === file_type_enum_1.FileType.PERSONAL) {
+            const maxStorageBytes = await this.getUserStorageLimit(userId);
             let storage = await this.userStorageRepository.findOne({
                 where: { userId },
             });
@@ -284,13 +331,24 @@ let FileService = class FileService {
                 storage = this.userStorageRepository.create({
                     userId,
                     usedSpace: 0,
-                    maxSpace: this.MAX_PERSONAL_SIZE,
+                    maxSpace: maxStorageBytes,
                 });
                 await this.userStorageRepository.save(storage);
             }
             const availableSpace = storage.maxSpace - storage.usedSpace;
             if (fileSize > availableSpace) {
-                throw new common_1.BadRequestException(`Not enough storage space. Available: ${this.formatBytes(availableSpace)}`);
+                const subscription = await this.userSubscriptionRepository.findOne({
+                    where: { userId, isActive: true },
+                    relations: ['plan'],
+                });
+                const planName = ((_a = subscription === null || subscription === void 0 ? void 0 : subscription.plan) === null || _a === void 0 ? void 0 : _a.planName) || 'Free';
+                const totalLimitMB = Math.round(storage.maxSpace / 1024 / 1024);
+                const usedMB = Math.round(storage.usedSpace / 1024 / 1024);
+                const availableMB = Math.round(availableSpace / 1024 / 1024);
+                const fileSizeMB = Math.round(fileSize / 1024 / 1024);
+                throw new common_1.BadRequestException(`Not enough storage space! Your ${planName} plan has ${totalLimitMB}MB total storage. ` +
+                    `Used: ${usedMB}MB, Available: ${availableMB}MB. ` +
+                    `This file (${fileSizeMB}MB) exceeds available space. Please upgrade your plan or delete some files.`);
             }
         }
         else {
@@ -351,7 +409,11 @@ exports.FileService = FileService = __decorate([
     __param(1, (0, typeorm_1.InjectRepository)(user_storage_entity_1.UserStorage)),
     __param(2, (0, typeorm_1.InjectRepository)(group_storage_entity_1.GroupStorage)),
     __param(3, (0, typeorm_1.InjectRepository)(group_member_entity_1.GroupMember)),
+    __param(4, (0, typeorm_1.InjectRepository)(user_subscription_entity_1.UserSubscription)),
+    __param(5, (0, typeorm_1.InjectRepository)(subscription_plan_entity_1.SubscriptionPlan)),
     __metadata("design:paramtypes", [typeorm_2.Repository,
+        typeorm_2.Repository,
+        typeorm_2.Repository,
         typeorm_2.Repository,
         typeorm_2.Repository,
         typeorm_2.Repository])

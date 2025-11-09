@@ -14,7 +14,7 @@ export class CreateGroupDto {
 
   @ApiProperty({
     description: 'Mô tả về nhóm',
-    example: 'Nhóm học chung môn Toán cao cấp A1',
+    example: 'Nhóm học chung môn Toán cao cấp ',
     required: false,
   })
   @IsOptional()

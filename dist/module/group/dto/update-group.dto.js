@@ -18,7 +18,7 @@ exports.UpdateGroupDto = UpdateGroupDto;
 __decorate([
     (0, swagger_1.ApiProperty)({
         description: 'Tên nhóm mới',
-        example: 'Nhóm học Toán A1 - Updated',
+        example: 'Nhóm học Toán Cao Cấp - Updated',
         required: false,
     }),
     (0, class_validator_1.IsOptional)(),
@@ -39,7 +39,7 @@ __decorate([
 __decorate([
     (0, swagger_1.ApiProperty)({
         description: 'Mã môn học mới',
-        example: 'MATH102',
+        example: 'MAE101',
         required: false,
     }),
     (0, class_validator_1.IsOptional)(),
