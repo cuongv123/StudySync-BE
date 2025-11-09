@@ -10,6 +10,8 @@ import { File } from './entities/file.entity';
 import { UserStorage } from './entities/user-storage.entity';
 import { GroupStorage } from './entities/group-storage.entity';
 import { GroupMember } from '../group/entities/group-member.entity';
+import { UserSubscription } from '../subscription/entities/user-subscription.entity';
+import { SubscriptionPlan } from '../subscription/entities/subscription-plan.entity';
 import { FileType } from '../../common/enums/file-type.enum';
 import { UploadFileDto } from './dto/upload-file.dto';
 import { CreateFolderDto } from './dto/create-folder.dto';
@@ -28,12 +30,36 @@ export class FileService {
     private groupStorageRepository: Repository<GroupStorage>,
     @InjectRepository(GroupMember)
     private groupMemberRepository: Repository<GroupMember>,
+    @InjectRepository(UserSubscription)
+    private userSubscriptionRepository: Repository<UserSubscription>,
+    @InjectRepository(SubscriptionPlan)
+    private subscriptionPlanRepository: Repository<SubscriptionPlan>,
   ) {}
 
   // Constants
-  private readonly MAX_PERSONAL_SIZE = 104857600; // 100MB
   private readonly MAX_GROUP_SIZE = 1073741824; // 1GB
   private readonly UPLOAD_DIR = path.join(process.cwd(), 'uploads');
+
+  // Helper method to get user's storage limit from subscription
+  private async getUserStorageLimit(userId: string): Promise<number> {
+    const subscription = await this.userSubscriptionRepository.findOne({
+      where: { userId, isActive: true },
+      relations: ['plan'],
+    });
+    
+    if (!subscription) {
+      // Nếu không có subscription, lấy Free plan (id=1) từ database
+      const freePlan = await this.userSubscriptionRepository.manager
+        .getRepository('SubscriptionPlan')
+        .findOne({ where: { id: 1 } });
+      
+      const maxStorageMB = freePlan?.personalStorageLimitMb || 200; // Default 200MB
+      return maxStorageMB * 1024 * 1024; // Convert MB to bytes
+    }
+    
+    const maxStorageMB = subscription.plan.personalStorageLimitMb;
+    return maxStorageMB * 1024 * 1024; // Convert MB to bytes
+  }
 
   async uploadFile(
     file: Express.Multer.File,
@@ -52,15 +78,16 @@ export class FileService {
       await this.validateGroupMember(userId, uploadDto.groupId);
     }
 
-    // Check file size limits
+    // Check file size limits based on user's subscription plan
     const maxSize = uploadDto.type === FileType.PERSONAL 
-      ? this.MAX_PERSONAL_SIZE 
+      ? await this.getUserStorageLimit(userId)
       : this.MAX_GROUP_SIZE;
     
     if (file.size > maxSize) {
-      const limit = uploadDto.type === FileType.PERSONAL ? '100MB' : '1GB';
+      const limitMB = Math.round(maxSize / 1024 / 1024);
+      const fileSizeMB = Math.round(file.size / 1024 / 1024);
       throw new BadRequestException(
-        `File size exceeds ${limit} limit for ${uploadDto.type} files`,
+        `File size (${fileSizeMB}MB) exceeds your plan's ${limitMB}MB limit. Please upgrade your plan or reduce file size.`,
       );
     }
 
@@ -249,6 +276,30 @@ export class FileService {
 
   async getStorageInfo(userId: string, type: FileType, groupId?: number) {
     if (type === FileType.PERSONAL) {
+      // Get user's active subscription to determine storage limit
+      const subscription = await this.userSubscriptionRepository.findOne({
+        where: { userId, isActive: true },
+        relations: ['plan'],
+      });
+
+      let maxStorageMB: number;
+      let planName: string;
+
+      if (!subscription) {
+        // Nếu không có subscription, lấy Free plan (id=1) từ database
+        const freePlan = await this.userSubscriptionRepository.manager
+          .getRepository('SubscriptionPlan')
+          .findOne({ where: { id: 1 } });
+        
+        maxStorageMB = freePlan?.personalStorageLimitMb || 200; // Default 200MB nếu không tìm thấy
+        planName = freePlan?.planName || 'Free';
+      } else {
+        maxStorageMB = subscription.plan.personalStorageLimitMb;
+        planName = subscription.plan.planName;
+      }
+
+      const maxStorageBytes = maxStorageMB * 1024 * 1024; // Convert MB to bytes
+
       let storage = await this.userStorageRepository.findOne({
         where: { userId },
       });
@@ -257,9 +308,15 @@ export class FileService {
         storage = this.userStorageRepository.create({
           userId,
           usedSpace: 0,
-          maxSpace: this.MAX_PERSONAL_SIZE,
+          maxSpace: maxStorageBytes,
         });
         await this.userStorageRepository.save(storage);
+      } else {
+        // Update maxSpace if subscription changed
+        if (storage.maxSpace !== maxStorageBytes) {
+          storage.maxSpace = maxStorageBytes;
+          await this.userStorageRepository.save(storage);
+        }
       }
 
       return {
@@ -267,6 +324,8 @@ export class FileService {
         maxSpace: storage.maxSpace,
         availableSpace: storage.availableSpace,
         usedPercentage: storage.usedPercentage,
+        planName: planName,
+        storageLimitMB: maxStorageMB,
       };
     } else {
       if (!groupId) {
@@ -341,6 +400,8 @@ export class FileService {
     fileSize: number,
   ): Promise<void> {
     if (type === FileType.PERSONAL) {
+      const maxStorageBytes = await this.getUserStorageLimit(userId);
+      
       let storage = await this.userStorageRepository.findOne({
         where: { userId },
       });
@@ -349,15 +410,27 @@ export class FileService {
         storage = this.userStorageRepository.create({
           userId,
           usedSpace: 0,
-          maxSpace: this.MAX_PERSONAL_SIZE,
+          maxSpace: maxStorageBytes,
         });
         await this.userStorageRepository.save(storage);
       }
 
       const availableSpace = storage.maxSpace - storage.usedSpace;
       if (fileSize > availableSpace) {
+        const subscription = await this.userSubscriptionRepository.findOne({
+          where: { userId, isActive: true },
+          relations: ['plan'],
+        });
+        const planName = subscription?.plan?.planName || 'Free';
+        const totalLimitMB = Math.round(storage.maxSpace / 1024 / 1024);
+        const usedMB = Math.round(storage.usedSpace / 1024 / 1024);
+        const availableMB = Math.round(availableSpace / 1024 / 1024);
+        const fileSizeMB = Math.round(fileSize / 1024 / 1024);
+        
         throw new BadRequestException(
-          `Not enough storage space. Available: ${this.formatBytes(availableSpace)}`,
+          `Not enough storage space! Your ${planName} plan has ${totalLimitMB}MB total storage. ` +
+          `Used: ${usedMB}MB, Available: ${availableMB}MB. ` +
+          `This file (${fileSizeMB}MB) exceeds available space. Please upgrade your plan or delete some files.`,
         );
       }
     } else {

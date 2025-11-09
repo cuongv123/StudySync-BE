@@ -15,13 +15,14 @@ const video_call_gateway_1 = require("./video-call.gateway");
 const video_call_entity_1 = require("./entities/video-call.entity");
 const call_participant_entity_1 = require("./entities/call-participant.entity");
 const group_member_entity_1 = require("../group/entities/group-member.entity");
+const user_subscription_entity_1 = require("../subscription/entities/user-subscription.entity");
 let VideoCallModule = class VideoCallModule {
 };
 exports.VideoCallModule = VideoCallModule;
 exports.VideoCallModule = VideoCallModule = __decorate([
     (0, common_1.Module)({
         imports: [
-            typeorm_1.TypeOrmModule.forFeature([video_call_entity_1.VideoCall, call_participant_entity_1.CallParticipant, group_member_entity_1.GroupMember]),
+            typeorm_1.TypeOrmModule.forFeature([video_call_entity_1.VideoCall, call_participant_entity_1.CallParticipant, group_member_entity_1.GroupMember, user_subscription_entity_1.UserSubscription]),
         ],
         controllers: [video_call_controller_1.VideoCallController],
         providers: [video_call_service_1.VideoCallService, video_call_gateway_1.VideoCallGateway],

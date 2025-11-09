@@ -19,12 +19,14 @@ const typeorm_2 = require("typeorm");
 const video_call_entity_1 = require("./entities/video-call.entity");
 const call_participant_entity_1 = require("./entities/call-participant.entity");
 const group_member_entity_1 = require("../group/entities/group-member.entity");
+const user_subscription_entity_1 = require("../subscription/entities/user-subscription.entity");
 const call_status_enum_1 = require("../../common/enums/call-status.enum");
 let VideoCallService = class VideoCallService {
-    constructor(videoCallRepository, participantRepository, groupMemberRepository) {
+    constructor(videoCallRepository, participantRepository, groupMemberRepository, userSubscriptionRepository) {
         this.videoCallRepository = videoCallRepository;
         this.participantRepository = participantRepository;
         this.groupMemberRepository = groupMemberRepository;
+        this.userSubscriptionRepository = userSubscriptionRepository;
     }
     async startCall(startCallDto, userId) {
         const { groupId, callTitle } = startCallDto;
@@ -34,6 +36,7 @@ let VideoCallService = class VideoCallService {
         if (!member) {
             throw new common_1.ForbiddenException('You are not a member of this group');
         }
+        await this.checkVideoCallLimit(userId);
         const existingCall = await this.videoCallRepository.findOne({
             where: {
                 groupId,
@@ -204,6 +207,38 @@ let VideoCallService = class VideoCallService {
             await this.leaveCall(participant.callId, userId);
         }
     }
+    async checkVideoCallLimit(userId) {
+        const subscription = await this.userSubscriptionRepository.findOne({
+            where: { userId, isActive: true },
+            relations: ['plan'],
+        });
+        if (!subscription) {
+            const freePlan = await this.userSubscriptionRepository.manager
+                .getRepository('SubscriptionPlan')
+                .findOne({ where: { id: 1 } });
+            const freeLimit = (freePlan === null || freePlan === void 0 ? void 0 : freePlan.videoCallMinutesLimit) || 15;
+            const calls = await this.videoCallRepository.find({
+                where: { startedBy: userId, status: call_status_enum_1.CallStatus.ENDED },
+            });
+            const usedMinutes = calls.reduce((total, call) => {
+                if (call.endedAt && call.startedAt) {
+                    const duration = (call.endedAt.getTime() - call.startedAt.getTime()) / (1000 * 60);
+                    return total + duration;
+                }
+                return total;
+            }, 0);
+            if (usedMinutes >= freeLimit) {
+                throw new common_1.BadRequestException(`Video call limit reached (${Math.round(usedMinutes)}/${freeLimit} minutes for Free plan). Please upgrade to Pro or Pro Max plan.`);
+            }
+            return;
+        }
+        const used = subscription.usageVideoMinutes || 0;
+        const limit = subscription.plan.videoCallMinutesLimit;
+        const planName = subscription.plan.planName;
+        if (used >= limit) {
+            throw new common_1.BadRequestException(`Video call limit reached (${Math.round(used)}/${limit} minutes for ${planName} plan). Please upgrade your plan or wait for monthly reset.`);
+        }
+    }
 };
 exports.VideoCallService = VideoCallService;
 exports.VideoCallService = VideoCallService = __decorate([
@@ -211,7 +246,9 @@ exports.VideoCallService = VideoCallService = __decorate([
     __param(0, (0, typeorm_1.InjectRepository)(video_call_entity_1.VideoCall)),
     __param(1, (0, typeorm_1.InjectRepository)(call_participant_entity_1.CallParticipant)),
     __param(2, (0, typeorm_1.InjectRepository)(group_member_entity_1.GroupMember)),
+    __param(3, (0, typeorm_1.InjectRepository)(user_subscription_entity_1.UserSubscription)),
     __metadata("design:paramtypes", [typeorm_2.Repository,
+        typeorm_2.Repository,
         typeorm_2.Repository,
         typeorm_2.Repository])
 ], VideoCallService);

@@ -41,6 +41,15 @@ export declare class FileController {
             maxSpace: number;
             availableSpace: number;
             usedPercentage: number;
+            planName: string;
+            storageLimitMB: number;
+        } | {
+            usedSpace: number;
+            maxSpace: number;
+            availableSpace: number;
+            usedPercentage: number;
+            planName?: undefined;
+            storageLimitMB?: undefined;
         };
     }>;
     getFileById(id: number, userId: string): Promise<{

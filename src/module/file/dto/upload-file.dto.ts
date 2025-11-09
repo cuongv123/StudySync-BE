@@ -6,15 +6,16 @@ import { FileType } from '../../../common/enums/file-type.enum';
 export class UploadFileDto {
   @ApiProperty({ 
     enum: FileType, 
-    description: 'Loại file: personal (100MB) hoặc group (1GB)',
-    example: 'personal' 
+    description: 'Loại file: "personal" (cá nhân - giới hạn 100MB) hoặc "group" (nhóm - giới hạn 1GB)',
+    example: FileType.PERSONAL,
   })
   @IsEnum(FileType)
   type: FileType;
 
   @ApiPropertyOptional({ 
-    description: 'Group ID (bắt buộc nếu type=group)', 
-    example: 7 
+    description: 'ID của nhóm (BẮT BUỘC nếu type="group"). Bỏ trống nếu type="personal"',
+    example: 7,
+    nullable: true,
   })
   @IsOptional()
   @Type(() => Number)
@@ -22,8 +23,9 @@ export class UploadFileDto {
   groupId?: number;
 
   @ApiPropertyOptional({ 
-    description: 'Parent folder ID (để upload vào folder)', 
-    example: 1 
+    description: 'ID của folder cha (nếu muốn upload vào folder). Để trống nếu upload vào ROOT',
+    example: null,
+    nullable: true,
   })
   @IsOptional()
   @Type(() => Number)
@@ -31,8 +33,9 @@ export class UploadFileDto {
   parentId?: number;
 
   @ApiPropertyOptional({ 
-    description: 'Tên tùy chỉnh cho file', 
-    maxLength: 255 
+    description: 'Tên tùy chỉnh cho file (nếu không nhập sẽ dùng tên gốc)',
+    example: 'Tài liệu học tập.pdf',
+    maxLength: 255,
   })
   @IsOptional()
   @IsString()

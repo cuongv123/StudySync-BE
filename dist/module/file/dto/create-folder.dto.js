@@ -12,13 +12,14 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.CreateFolderDto = void 0;
 const class_validator_1 = require("class-validator");
 const swagger_1 = require("@nestjs/swagger");
+const file_type_enum_1 = require("../../../common/enums/file-type.enum");
 class CreateFolderDto {
 }
 exports.CreateFolderDto = CreateFolderDto;
 __decorate([
     (0, swagger_1.ApiProperty)({
         description: 'Tên folder',
-        example: 'Documents',
+        example: 'Tài liệu học tập',
         maxLength: 255
     }),
     (0, class_validator_1.IsString)(),
@@ -26,9 +27,19 @@ __decorate([
     __metadata("design:type", String)
 ], CreateFolderDto.prototype, "name", void 0);
 __decorate([
+    (0, swagger_1.ApiProperty)({
+        description: 'Loại folder: personal (cá nhân) hoặc group (nhóm)',
+        enum: file_type_enum_1.FileType,
+        example: file_type_enum_1.FileType.PERSONAL,
+    }),
+    (0, class_validator_1.IsEnum)(file_type_enum_1.FileType),
+    __metadata("design:type", String)
+], CreateFolderDto.prototype, "type", void 0);
+__decorate([
     (0, swagger_1.ApiPropertyOptional)({
-        description: 'Parent folder ID',
-        example: 1
+        description: 'ID của folder cha (nếu tạo folder con bên trong folder khác). Để trống nếu tạo folder ở ROOT',
+        example: null,
+        nullable: true,
     }),
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsInt)(),
@@ -36,8 +47,9 @@ __decorate([
 ], CreateFolderDto.prototype, "parentId", void 0);
 __decorate([
     (0, swagger_1.ApiPropertyOptional)({
-        description: 'Group ID (nếu tạo folder cho group)',
-        example: 7
+        description: 'ID của nhóm (BẮT BUỘC nếu type="group"). Bỏ trống nếu type="personal"',
+        example: 7,
+        nullable: true,
     }),
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsInt)(),

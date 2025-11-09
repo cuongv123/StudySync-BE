@@ -215,16 +215,21 @@ let AiChatService = AiChatService_1 = class AiChatService {
             relations: ['plan'],
         });
         if (!subscription) {
+            const freePlan = await this.subscriptionRepo.manager
+                .getRepository('SubscriptionPlan')
+                .findOne({ where: { id: 1 } });
+            const freeLimit = (freePlan === null || freePlan === void 0 ? void 0 : freePlan.aiQueriesLimit) || 5;
             const count = await this.aiHistoryRepo.count({ where: { userId } });
-            if (count >= 50) {
-                throw new common_1.BadRequestException('AI query limit reached. Please upgrade to Pro plan.');
+            if (count >= freeLimit) {
+                throw new common_1.BadRequestException(`AI query limit reached (${freeLimit} queries for Free plan). Please upgrade to Pro or Pro Max plan.`);
             }
             return;
         }
         const used = subscription.usageAiQueries || 0;
         const limit = subscription.plan.aiQueriesLimit;
+        const planName = subscription.plan.planName;
         if (used >= limit) {
-            throw new common_1.BadRequestException(`AI query limit reached (${limit} queries). Please upgrade your plan.`);
+            throw new common_1.BadRequestException(`AI query limit reached (${limit} queries for ${planName} plan). Please upgrade your plan.`);
         }
     }
     async updateUsageCounter(userId) {

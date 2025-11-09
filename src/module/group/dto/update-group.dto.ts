@@ -4,7 +4,7 @@ import { IsOptional, IsString, MaxLength } from 'class-validator';
 export class UpdateGroupDto {
   @ApiProperty({
     description: 'Tên nhóm mới',
-    example: 'Nhóm học Toán A1 - Updated',
+    example: 'Nhóm học Toán Cao Cấp - Updated',
     required: false,
   })
   @IsOptional()
@@ -23,7 +23,7 @@ export class UpdateGroupDto {
 
   @ApiProperty({
     description: 'Mã môn học mới',
-    example: 'MATH102',
+    example: 'MAE101',
     required: false,
   })
   @IsOptional()
