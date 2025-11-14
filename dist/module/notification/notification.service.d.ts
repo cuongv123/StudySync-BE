@@ -23,6 +23,13 @@ export declare class NotificationService {
         updatedCount: number;
     }>>;
     deleteNotification(userId: string, notificationId: number): Promise<ApiResponse<null>>;
+    createBulkNotifications(params: {
+        userIds: string[];
+        title: string;
+        message: string;
+        type: string;
+        groupId: number;
+    }): Promise<void>;
     createInviteNotification(invitedUserId: string, inviterName: string, groupName: string, groupId: number, inviterId: string): Promise<Notification>;
     createJoinRequestNotification(leaderId: string, requesterName: string, groupName: string, groupId: number, requesterId: string): Promise<Notification>;
     createMemberJoinedNotification(memberIds: string[], newMemberName: string, groupName: string, groupId: number, newMemberId: string): Promise<Notification[]>;

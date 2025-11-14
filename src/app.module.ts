@@ -16,6 +16,7 @@ import { FileModule } from './module/file/file.module';
 import { VideoCallModule } from './module/video-call/video-call.module';
 import { AiChatModule } from './module/ai-chat/ai-chat.module';
 import { ReviewModule } from './module/review/review.module';
+import { GroupEventModule } from './module/group-event/group-event.module';
 
 
 @Module({
@@ -36,7 +37,8 @@ import { ReviewModule } from './module/review/review.module';
         FileModule, 
         VideoCallModule, 
         AiChatModule, 
-        ReviewModule
+        ReviewModule,
+        GroupEventModule
     ],
 })
 export class AppModule {}

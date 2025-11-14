@@ -25,6 +25,7 @@ const file_module_1 = require("./module/file/file.module");
 const video_call_module_1 = require("./module/video-call/video-call.module");
 const ai_chat_module_1 = require("./module/ai-chat/ai-chat.module");
 const review_module_1 = require("./module/review/review.module");
+const group_event_module_1 = require("./module/group-event/group-event.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -47,7 +48,8 @@ exports.AppModule = AppModule = __decorate([
             file_module_1.FileModule,
             video_call_module_1.VideoCallModule,
             ai_chat_module_1.AiChatModule,
-            review_module_1.ReviewModule
+            review_module_1.ReviewModule,
+            group_event_module_1.GroupEventModule
         ],
     })
 ], AppModule);

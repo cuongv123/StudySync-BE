@@ -191,6 +191,58 @@ export class NotificationService {
   }
 
   // Helper methods for creating specific notification types
+  
+  /**
+   * Tạo notifications hàng loạt cho nhiều users
+   */
+  async createBulkNotifications(params: {
+    userIds: string[];
+    title: string;
+    message: string;
+    type: string;
+    groupId: number;
+  }): Promise<void> {
+    const { userIds, title, message, type, groupId } = params;
+
+    const notifications = userIds.map((userId) =>
+      this.notificationRepository.create({
+        type: type as NotificationType,
+        title,
+        content: message,
+        userId,
+        relatedId: groupId,
+        relatedType: 'group',
+      }),
+    );
+
+    const savedNotifications = await this.notificationRepository.save(notifications);
+
+    // Emit real-time notifications
+    if (this.notificationGateway) {
+      try {
+        for (const notification of savedNotifications) {
+          const notificationData = {
+            id: notification.id,
+            type: notification.type,
+            title: notification.title,
+            content: notification.content,
+            relatedId: notification.relatedId,
+            relatedType: notification.relatedType,
+            isRead: notification.isRead,
+            createdAt: notification.createdAt,
+          };
+
+          await this.notificationGateway.emitSystemNotification(
+            notification.userId,
+            notificationData,
+          );
+        }
+      } catch (error) {
+        console.error('Failed to emit bulk notifications:', error);
+      }
+    }
+  }
+
   async createInviteNotification(
     invitedUserId: string,
     inviterName: string,
