@@ -6,7 +6,7 @@ import { EventCleanupService } from './services/event-cleanup.service';
 import { GroupEvent } from './entities/group-event.entity';
 import { EventParticipant } from './entities/event-participant.entity';
 import { StudyGroup } from '../group/entities/group.entity';
-import { User } from '../User/entities/user.entity';
+import { User } from '../User/entities/User.entity';
 import { NotificationModule } from '../notification/notification.module';
 
 @Module({
