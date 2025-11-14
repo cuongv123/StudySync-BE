@@ -163,6 +163,38 @@ let NotificationService = class NotificationService {
             throw error;
         }
     }
+    async createBulkNotifications(params) {
+        const { userIds, title, message, type, groupId } = params;
+        const notifications = userIds.map((userId) => this.notificationRepository.create({
+            type: type,
+            title,
+            content: message,
+            userId,
+            relatedId: groupId,
+            relatedType: 'group',
+        }));
+        const savedNotifications = await this.notificationRepository.save(notifications);
+        if (this.notificationGateway) {
+            try {
+                for (const notification of savedNotifications) {
+                    const notificationData = {
+                        id: notification.id,
+                        type: notification.type,
+                        title: notification.title,
+                        content: notification.content,
+                        relatedId: notification.relatedId,
+                        relatedType: notification.relatedType,
+                        isRead: notification.isRead,
+                        createdAt: notification.createdAt,
+                    };
+                    await this.notificationGateway.emitSystemNotification(notification.userId, notificationData);
+                }
+            }
+            catch (error) {
+                console.error('Failed to emit bulk notifications:', error);
+            }
+        }
+    }
     async createInviteNotification(invitedUserId, inviterName, groupName, groupId, inviterId) {
         return await this.createNotification({
             type: notification_entity_1.NotificationType.INVITE_RECEIVED,
