@@ -12,7 +12,7 @@ import { CreateEventDto } from '../dto/create-event.dto';
 import { UpdateEventDto } from '../dto/update-event.dto';
 import { FilterEventDto } from '../dto/filter-event.dto';
 import { StudyGroup } from '../../group/entities/group.entity';
-import { User } from '../../User/entities/user.entity';
+import { User } from '../../User/entities/User.entity';
 import { NotificationService } from '../../notification/notification.service';
 
 @Injectable()
