@@ -73,12 +73,6 @@ import { EventParticipant } from 'src/module/group-event/entities/event-particip
             ssl: {
               rejectUnauthorized: false, // Cần thiết cho Supabase
             },
-            // ✅ Performance: Enable query caching
-            cache: {
-              duration: 30000, // Cache queries for 30 seconds
-              type: 'database',
-              tableName: 'query_cache',
-            },
             // ✅ Performance: Connection pooling
             extra: {
               max: 20, // Maximum pool connections
@@ -128,12 +122,6 @@ import { EventParticipant } from 'src/module/group-event/entities/event-particip
           logging: true,
           retryAttempts: 5,
           retryDelay: 3000,
-          // ✅ Performance: Enable query caching (local dev)
-          cache: {
-            duration: 10000, // Cache for 10 seconds in dev
-            type: 'database',
-            tableName: 'query_cache',
-          },
           // ✅ Performance: Connection pooling
           extra: {
             max: 10, // Smaller pool for local dev
