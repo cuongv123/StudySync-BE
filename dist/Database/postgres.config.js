@@ -81,11 +81,6 @@ exports.DatabaseModule = DatabaseModule = __decorate([
                             ssl: {
                                 rejectUnauthorized: false,
                             },
-                            cache: {
-                                duration: 30000,
-                                type: 'database',
-                                tableName: 'query_cache',
-                            },
                             extra: {
                                 max: 20,
                                 min: 5,
@@ -131,11 +126,6 @@ exports.DatabaseModule = DatabaseModule = __decorate([
                         logging: true,
                         retryAttempts: 5,
                         retryDelay: 3000,
-                        cache: {
-                            duration: 10000,
-                            type: 'database',
-                            tableName: 'query_cache',
-                        },
                         extra: {
                             max: 10,
                             min: 2,

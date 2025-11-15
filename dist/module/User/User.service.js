@@ -70,7 +70,9 @@ let UsersService = class UsersService {
         return this.userRepository.find();
     }
     async findOne(id) {
-        const user = await this.userRepository.findOne({ where: { id } });
+        const user = await this.userRepository.findOne({
+            where: { id },
+        });
         if (!user)
             throw new common_1.NotFoundException('User not found');
         return user;
