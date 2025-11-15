@@ -366,25 +366,33 @@ let GroupService = class GroupService {
         const whereCondition = type === 'received'
             ? { inviteEmail: user.email, status: group_invitation_entity_1.InvitationStatus.PENDING }
             : { inviterId: userId };
-        const invitations = await this.invitationRepository.find({
-            where: whereCondition,
-            order: { invitedAt: 'DESC' }
-        });
-        const results = [];
-        for (const inv of invitations) {
-            const group = await this.groupRepository.findOne({ where: { id: inv.groupId } });
-            const inviter = await this.userRepository.findOne({ where: { id: inv.inviterId } });
-            results.push({
+        const queryBuilder = this.invitationRepository
+            .createQueryBuilder('invitation')
+            .leftJoinAndSelect('invitation.group', 'group')
+            .leftJoinAndSelect('invitation.inviter', 'inviter')
+            .orderBy('invitation.invitedAt', 'DESC');
+        if (type === 'received') {
+            queryBuilder.where('invitation.inviteEmail = :email AND invitation.status = :status', {
+                email: user.email,
+                status: group_invitation_entity_1.InvitationStatus.PENDING
+            });
+        }
+        else {
+            queryBuilder.where('invitation.inviterId = :inviterId', { inviterId: userId });
+        }
+        const invitations = await queryBuilder.getMany();
+        return invitations.map(inv => {
+            var _a, _b, _c;
+            return ({
                 id: inv.id,
-                groupName: (group === null || group === void 0 ? void 0 : group.groupName) || 'Unknown Group',
-                groupDescription: (group === null || group === void 0 ? void 0 : group.description) || '',
+                groupName: ((_a = inv.group) === null || _a === void 0 ? void 0 : _a.groupName) || 'Unknown Group',
+                groupDescription: ((_b = inv.group) === null || _b === void 0 ? void 0 : _b.description) || '',
                 status: inv.status,
-                invitedBy: (inviter === null || inviter === void 0 ? void 0 : inviter.username) || 'Unknown User',
+                invitedBy: ((_c = inv.inviter) === null || _c === void 0 ? void 0 : _c.username) || 'Unknown User',
                 inviteEmail: inv.inviteEmail,
                 invitedAt: inv.invitedAt
             });
-        }
-        return results;
+        });
     }
     async getJoinRequests(groupId, leaderId) {
         const group = await this.groupRepository.findOne({
@@ -396,33 +404,24 @@ let GroupService = class GroupService {
         if (group.leaderId !== leaderId) {
             throw new common_1.ForbiddenException('Chỉ leader mới có thể xem danh sách yêu cầu gia nhập');
         }
-        const joinRequests = await this.invitationRepository.find({
-            where: {
-                groupId,
-                status: group_invitation_entity_1.InvitationStatus.PENDING
-            },
-            order: { invitedAt: 'DESC' }
-        });
-        const results = [];
-        for (const request of joinRequests) {
-            const user = await this.userRepository.findOne({
-                where: { email: request.inviteEmail }
-            });
-            if (user && request.inviterId === user.id) {
-                results.push({
-                    id: request.id,
-                    groupId: request.groupId,
-                    groupName: group.groupName,
-                    requesterName: user.username,
-                    requesterEmail: user.email,
-                    requesterId: user.id,
-                    requestedAt: request.invitedAt,
-                    status: request.status,
-                    message: request.message
-                });
-            }
-        }
-        return results;
+        const joinRequests = await this.invitationRepository
+            .createQueryBuilder('invitation')
+            .innerJoin('users', 'user', 'user.email = invitation.inviteEmail AND user.id = invitation.inviterId')
+            .select([
+            'invitation.id as id',
+            'invitation.groupId as groupId',
+            'user.id as requesterId',
+            'user.username as requesterName',
+            'user.email as requesterEmail',
+            'invitation.message as message',
+            'invitation.invitedAt as requestedAt',
+            'invitation.status as status'
+        ])
+            .where('invitation.groupId = :groupId', { groupId })
+            .andWhere('invitation.status = :status', { status: group_invitation_entity_1.InvitationStatus.PENDING })
+            .orderBy('invitation.invitedAt', 'DESC')
+            .getRawMany();
+        return joinRequests.map(req => (Object.assign(Object.assign({}, req), { groupName: group.groupName })));
     }
     async approveJoinRequest(requestId, leaderId) {
         const joinRequest = await this.invitationRepository.findOne({

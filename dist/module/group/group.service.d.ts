@@ -67,7 +67,15 @@ export declare class GroupService {
         message: string;
         groupId: number;
     }>;
-    getGroupInvitations(userId: string, type?: 'received' | 'sent'): Promise<any[]>;
+    getGroupInvitations(userId: string, type?: 'received' | 'sent'): Promise<{
+        id: number;
+        groupName: string;
+        groupDescription: string;
+        status: InvitationStatus;
+        invitedBy: string;
+        inviteEmail: string;
+        invitedAt: Date;
+    }[]>;
     getJoinRequests(groupId: number, leaderId: string): Promise<any[]>;
     approveJoinRequest(requestId: number, leaderId: string): Promise<{
         message: string;

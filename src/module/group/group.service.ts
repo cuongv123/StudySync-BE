@@ -538,29 +538,34 @@ export class GroupService {
       ? { inviteEmail: user.email, status: InvitationStatus.PENDING }
       : { inviterId: userId };
 
-    const invitations = await this.invitationRepository.find({
-      where: whereCondition,
-      order: { invitedAt: 'DESC' }
-    });
+    // ✅ OPTIMIZED: Use QueryBuilder with joins to avoid N+1
+    const queryBuilder = this.invitationRepository
+      .createQueryBuilder('invitation')
+      .leftJoinAndSelect('invitation.group', 'group')
+      .leftJoinAndSelect('invitation.inviter', 'inviter')
+      .orderBy('invitation.invitedAt', 'DESC');
 
-    // Manually fetch related data
-    const results = [];
-    for (const inv of invitations) {
-      const group = await this.groupRepository.findOne({ where: { id: inv.groupId } });
-      const inviter = await this.userRepository.findOne({ where: { id: inv.inviterId } });
-      
-      results.push({
-        id: inv.id,
-        groupName: group?.groupName || 'Unknown Group',
-        groupDescription: group?.description || '',
-        status: inv.status,
-        invitedBy: inviter?.username || 'Unknown User',
-        inviteEmail: inv.inviteEmail,
-        invitedAt: inv.invitedAt
+    if (type === 'received') {
+      queryBuilder.where('invitation.inviteEmail = :email AND invitation.status = :status', {
+        email: user.email,
+        status: InvitationStatus.PENDING
       });
+    } else {
+      queryBuilder.where('invitation.inviterId = :inviterId', { inviterId: userId });
     }
 
-    return results;
+    const invitations = await queryBuilder.getMany();
+
+    // Map results without additional queries
+    return invitations.map(inv => ({
+      id: inv.id,
+      groupName: inv.group?.groupName || 'Unknown Group',
+      groupDescription: inv.group?.description || '',
+      status: inv.status,
+      invitedBy: inv.inviter?.username || 'Unknown User',
+      inviteEmail: inv.inviteEmail,
+      invitedAt: inv.invitedAt
+    }));
   }
 
   // ================= JOIN REQUEST MANAGEMENT =================
@@ -579,40 +584,30 @@ export class GroupService {
       throw new ForbiddenException('Chỉ leader mới có thể xem danh sách yêu cầu gia nhập');
     }
 
-    // 2. Lấy danh sách join requests (pending) của nhóm
-    // Join request được phân biệt với invitation bằng cách: inviterId chính là người gửi request
-    const joinRequests = await this.invitationRepository.find({
-      where: { 
-        groupId, 
-        status: InvitationStatus.PENDING 
-      },
-      order: { invitedAt: 'DESC' }
-    });
+    // 2. ✅ OPTIMIZED: Use single query with subquery to get join requests
+    // Join request: inviterId = user who sent request (self-invite)
+    const joinRequests = await this.invitationRepository
+      .createQueryBuilder('invitation')
+      .innerJoin('users', 'user', 'user.email = invitation.inviteEmail AND user.id = invitation.inviterId')
+      .select([
+        'invitation.id as id',
+        'invitation.groupId as groupId',
+        'user.id as requesterId',
+        'user.username as requesterName',
+        'user.email as requesterEmail',
+        'invitation.message as message',
+        'invitation.invitedAt as requestedAt',
+        'invitation.status as status'
+      ])
+      .where('invitation.groupId = :groupId', { groupId })
+      .andWhere('invitation.status = :status', { status: InvitationStatus.PENDING })
+      .orderBy('invitation.invitedAt', 'DESC')
+      .getRawMany();
 
-    // 3. Lấy thông tin của người gửi request
-    const results = [];
-    for (const request of joinRequests) {
-      // Lấy user info từ email
-      const user = await this.userRepository.findOne({
-        where: { email: request.inviteEmail }
-      });
-
-      if (user && request.inviterId === user.id) { // Đây là join request (tự gửi)
-        results.push({
-          id: request.id,
-          groupId: request.groupId,
-          groupName: group.groupName,
-          requesterName: user.username,
-          requesterEmail: user.email,
-          requesterId: user.id,
-          requestedAt: request.invitedAt,
-          status: request.status,
-          message: request.message // Add message to response
-        });
-      }
-    }
-
-    return results;
+    return joinRequests.map(req => ({
+      ...req,
+      groupName: group.groupName
+    }));
   }
 
   async approveJoinRequest(requestId: number, leaderId: string) {

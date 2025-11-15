@@ -81,6 +81,17 @@ exports.DatabaseModule = DatabaseModule = __decorate([
                             ssl: {
                                 rejectUnauthorized: false,
                             },
+                            cache: {
+                                duration: 30000,
+                                type: 'database',
+                                tableName: 'query_cache',
+                            },
+                            extra: {
+                                max: 20,
+                                min: 5,
+                                idleTimeoutMillis: 30000,
+                                connectionTimeoutMillis: 2000,
+                            },
                         };
                     }
                     return {
@@ -120,6 +131,17 @@ exports.DatabaseModule = DatabaseModule = __decorate([
                         logging: true,
                         retryAttempts: 5,
                         retryDelay: 3000,
+                        cache: {
+                            duration: 10000,
+                            type: 'database',
+                            tableName: 'query_cache',
+                        },
+                        extra: {
+                            max: 10,
+                            min: 2,
+                            idleTimeoutMillis: 30000,
+                            connectionTimeoutMillis: 2000,
+                        },
                     };
                 },
             }),
