@@ -122,7 +122,7 @@ import { EventParticipant } from 'src/module/group-event/entities/event-particip
           logging: true,
           retryAttempts: 5,
           retryDelay: 3000,
-          // ✅ Performance: Connection pooling
+          //  Performance: Connection pooling
           extra: {
             max: 10, // Smaller pool for local dev
             min: 2,
