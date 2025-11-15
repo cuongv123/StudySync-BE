@@ -24,6 +24,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt.auth.guard';
 import { PaymentService } from './payment.service';
 import { PurchaseSubscriptionDto } from './dto/purchase-subscription.dto';
 import { Request as ExpressRequest, Response } from 'express';
+import { Public } from '../../decorator/public.decorator';
 
 @ApiTags('Payments')
 @Controller('payments')
@@ -33,6 +34,19 @@ export class PaymentController {
   constructor(
     private readonly paymentService: PaymentService,
   ) {}
+
+  @Public()
+  @Get('health')
+  @ApiOperation({ summary: 'Health check endpoint for UptimeRobot monitoring' })
+  @ApiResponse({ status: 200, description: 'Service is healthy' })
+  healthCheck() {
+    return {
+      status: 'ok',
+      service: 'payment',
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+    };
+  }
 
   @Post('purchase')
   @UseGuards(JwtAuthGuard)
