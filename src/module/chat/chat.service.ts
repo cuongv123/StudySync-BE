@@ -249,39 +249,36 @@ export class ChatService {
     replyToId?: number
   ): Promise<void> {
     try {
-      // Lấy thông tin group và sender
-      const [group, sender] = await Promise.all([
+      // ✅ OPTIMIZED: Use Promise.all for parallel queries
+      const [group, sender, groupMembers] = await Promise.all([
         this.groupRepository.findOne({ where: { id: groupId } }),
-        this.userRepository.findOne({ where: { id: senderId } })
+        this.userRepository.findOne({ where: { id: senderId } }),
+        this.groupMemberRepository
+          .createQueryBuilder('member')
+          .select('member.userId')
+          .where('member.groupId = :groupId', { groupId })
+          .andWhere('member.userId != :senderId', { senderId })
+          .getMany()
       ]);
 
-      if (!group || !sender) return;
+      if (!group || !sender || groupMembers.length === 0) return;
 
-      // Lấy tất cả members trong group (trừ người gửi)
-      const groupMembers = await this.groupMemberRepository.find({
-        where: { groupId },
-        relations: ['user']
+      const recipientUserIds = groupMembers.map(m => m.userId);
+
+      // ✅ OPTIMIZED: Use bulk notification creation
+      const notificationType = replyToId ? NotificationType.MESSAGE_REPLY : NotificationType.NEW_MESSAGE;
+      const title = replyToId ? 'Tin nhắn trả lời mới' : 'Tin nhắn mới';
+      const content = replyToId 
+        ? `${sender.username} đã trả lời tin nhắn trong nhóm "${group.groupName}": ${message.content.substring(0, 50)}...`
+        : `${sender.username} đã gửi tin nhắn trong nhóm "${group.groupName}": ${message.content.substring(0, 50)}...`;
+
+      await this.notificationService.createBulkNotifications({
+        userIds: recipientUserIds,
+        type: notificationType,
+        title,
+        message: content,
+        groupId
       });
-
-      const recipientMembers = groupMembers.filter(member => member.userId !== senderId);
-
-      // Gửi notification cho từng member
-      for (const member of recipientMembers) {
-        const notificationType = replyToId ? NotificationType.MESSAGE_REPLY : NotificationType.NEW_MESSAGE;
-        const title = replyToId ? 'Tin nhắn trả lời mới' : 'Tin nhắn mới';
-        const content = replyToId 
-          ? `${sender.username} đã trả lời tin nhắn trong nhóm "${group.groupName}": ${message.content.substring(0, 50)}...`
-          : `${sender.username} đã gửi tin nhắn trong nhóm "${group.groupName}": ${message.content.substring(0, 50)}...`;
-
-        await this.notificationService.createNotification({
-          userId: member.userId,
-          type: notificationType,
-          title,
-          message: content,
-          groupId: groupId,
-          relatedUserId: senderId
-        });
-      }
     } catch (error) {
       console.error('Error sending chat notifications:', error);
       // Không throw lỗi để không ảnh hưởng đến việc gửi tin nhắn chính

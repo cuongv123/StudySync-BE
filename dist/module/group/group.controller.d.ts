@@ -26,8 +26,24 @@ export declare class GroupController {
         invitations: import("./entities/group-invitation.entity").GroupInvitation[];
     }[]>;
     getMyGroups(req: any): Promise<import("./entities/group.entity").StudyGroup[]>;
-    getReceivedInvitations(req: any): Promise<any[]>;
-    getSentInvitations(req: any): Promise<any[]>;
+    getReceivedInvitations(req: any): Promise<{
+        id: number;
+        groupName: string;
+        groupDescription: string;
+        status: import("./entities/group-invitation.entity").InvitationStatus;
+        invitedBy: string;
+        inviteEmail: string;
+        invitedAt: Date;
+    }[]>;
+    getSentInvitations(req: any): Promise<{
+        id: number;
+        groupName: string;
+        groupDescription: string;
+        status: import("./entities/group-invitation.entity").InvitationStatus;
+        invitedBy: string;
+        inviteEmail: string;
+        invitedAt: Date;
+    }[]>;
     getGroupDetail(id: number, req: any): Promise<import("./entities/group.entity").StudyGroup>;
     updateGroup(id: number, updateDto: UpdateGroupDto, req: any): Promise<import("./entities/group.entity").StudyGroup>;
     inviteMember(groupId: number, inviteDto: InviteMemberDto, req: any): Promise<{

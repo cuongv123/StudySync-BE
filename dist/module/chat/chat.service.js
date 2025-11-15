@@ -155,32 +155,31 @@ let ChatService = class ChatService {
     }
     async sendChatNotifications(senderId, groupId, message, replyToId) {
         try {
-            const [group, sender] = await Promise.all([
+            const [group, sender, groupMembers] = await Promise.all([
                 this.groupRepository.findOne({ where: { id: groupId } }),
-                this.userRepository.findOne({ where: { id: senderId } })
+                this.userRepository.findOne({ where: { id: senderId } }),
+                this.groupMemberRepository
+                    .createQueryBuilder('member')
+                    .select('member.userId')
+                    .where('member.groupId = :groupId', { groupId })
+                    .andWhere('member.userId != :senderId', { senderId })
+                    .getMany()
             ]);
-            if (!group || !sender)
+            if (!group || !sender || groupMembers.length === 0)
                 return;
-            const groupMembers = await this.groupMemberRepository.find({
-                where: { groupId },
-                relations: ['user']
+            const recipientUserIds = groupMembers.map(m => m.userId);
+            const notificationType = replyToId ? notification_entity_1.NotificationType.MESSAGE_REPLY : notification_entity_1.NotificationType.NEW_MESSAGE;
+            const title = replyToId ? 'Tin nhắn trả lời mới' : 'Tin nhắn mới';
+            const content = replyToId
+                ? `${sender.username} đã trả lời tin nhắn trong nhóm "${group.groupName}": ${message.content.substring(0, 50)}...`
+                : `${sender.username} đã gửi tin nhắn trong nhóm "${group.groupName}": ${message.content.substring(0, 50)}...`;
+            await this.notificationService.createBulkNotifications({
+                userIds: recipientUserIds,
+                type: notificationType,
+                title,
+                message: content,
+                groupId
             });
-            const recipientMembers = groupMembers.filter(member => member.userId !== senderId);
-            for (const member of recipientMembers) {
-                const notificationType = replyToId ? notification_entity_1.NotificationType.MESSAGE_REPLY : notification_entity_1.NotificationType.NEW_MESSAGE;
-                const title = replyToId ? 'Tin nhắn trả lời mới' : 'Tin nhắn mới';
-                const content = replyToId
-                    ? `${sender.username} đã trả lời tin nhắn trong nhóm "${group.groupName}": ${message.content.substring(0, 50)}...`
-                    : `${sender.username} đã gửi tin nhắn trong nhóm "${group.groupName}": ${message.content.substring(0, 50)}...`;
-                await this.notificationService.createNotification({
-                    userId: member.userId,
-                    type: notificationType,
-                    title,
-                    message: content,
-                    groupId: groupId,
-                    relatedUserId: senderId
-                });
-            }
         }
         catch (error) {
             console.error('Error sending chat notifications:', error);
