@@ -175,12 +175,12 @@ export class SubscriptionService {
     this.logger.log(`Processing webhook for order: ${webhookData.orderCode}`);
 
     // Verify webhook signature
-    const isValid = this.payosService.verifyWebhookSignature(webhookData);
-
-    if (!isValid) {
-      this.logger.error('Invalid webhook signature');
-      throw new BadRequestException('Invalid webhook signature');
-    }
+    try {
+  await this.payosService.verifyWebhook(webhookData);
+} catch {
+  this.logger.error('Invalid webhook signature');
+  throw new BadRequestException('Invalid webhook signature');
+}
 
     // Find payment record
     const payment = await this.paymentRepository.findOne({
