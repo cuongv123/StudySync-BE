@@ -93,31 +93,35 @@ export class PaymentController {
     }
   }
 
-  @Post('webhook')
+    @Post('webhook')
   @ApiOperation({ summary: 'PayOS webhook endpoint' })
   @ApiResponse({ status: 200, description: 'Webhook processed successfully' })
   async handlePayOSWebhook(@Req() req: any, @Res() res: any) {
-    this.logger.log('=== PayOS Webhook START ===');
-    
+    const body = req.body || {};
+
+    // Body rỗng: test endpoint -> trả 200, không xử lý
+    if (Object.keys(body).length === 0) {
+      return res.status(200).json({ success: true, message: 'Webhook OK' });
+    }
+
+    // 1) Xác thực chữ ký. Sai/thiếu -> từ chối.
+    let verifiedData;
     try {
-      const body = req.body || {};
-      this.logger.log('Webhook Body:', JSON.stringify(body));
+      verifiedData = await this.paymentService.verifyWebhook(body);
+    } catch (error: any) {
+      this.logger.warn(`Webhook rejected - invalid signature: ${error.message}`);
+      return res.status(401).json({ success: false, error: 'Invalid signature' });
+    }
 
-      // For PayOS test - just return success
-      if (!body || Object.keys(body).length === 0) {
-        this.logger.log('✅ Empty body - PayOS test');
-        return res.status(200).json({ success: true, message: 'Webhook OK' });
-      }
-
-      // Process real webhook
-      const result = await this.paymentService.handlePaymentWebhook(body);
-      this.logger.log('✅ Webhook processed');
-      
+    // 2) Xử lý bằng dữ liệu ĐÃ XÁC THỰC (không dùng body thô)
+    try {
+      const result = await this.paymentService.handlePaymentWebhook(verifiedData);
+      this.logger.log(`Webhook handled: order=${verifiedData.orderCode}, ${result.message}`);
       return res.status(200).json({ success: true, data: result });
     } catch (error: any) {
-      this.logger.error('❌ Webhook error:', error.message);
-      // Always return 200 to prevent retry
-      return res.status(200).json({ success: false, error: error.message });
+      // Lỗi bất ngờ -> 500 để PayOS gửi lại (transaction đã rollback nên an toàn)
+      this.logger.error(`Webhook processing failed for order ${verifiedData.orderCode}: ${error.message}`);
+      return res.status(500).json({ success: false, error: 'Webhook processing failed' });
     }
   }
 
@@ -128,7 +132,7 @@ export class PaymentController {
   @ApiResponse({ status: 200, description: 'Returns user payment history' })
   async getPaymentHistory(@Request() req) {
     return {
-      data: await this.paymentService.getUserPayments(req.user.sub),
+      data: await this.paymentService.getUserPayments(req.user?.id || req.user?.userId),
       statusCode: 200,
       message: 'Success',
       timestamp: new Date().toISOString(),

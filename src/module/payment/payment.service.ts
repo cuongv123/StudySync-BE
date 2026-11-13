@@ -1,11 +1,11 @@
-import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, UnauthorizedException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, LessThan } from 'typeorm';
+import { Repository, LessThan, EntityManager } from 'typeorm';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { SubscriptionPayment, PaymentStatus } from '../subscription/entities/subscription-payment.entity';
 import { SubscriptionPlan } from '../subscription/entities/subscription-plan.entity';
 import { UserSubscription, SubscriptionStatus } from '../subscription/entities/user-subscription.entity';
-import { PayOSService } from '../subscription/services/payos.service';
+import { PayOSService, PayOSWebhookData } from '../subscription/services/payos.service';
 import { ConfigService } from '@nestjs/config';
 
 @Injectable()
@@ -145,67 +145,72 @@ export class PaymentService {
   /**
    * Xử lý webhook từ PayOS khi payment thành công
    */
-  async handlePaymentWebhook(webhookData: any) {
-    this.logger.log('=== Webhook Data Received ===');
-    this.logger.log(JSON.stringify(webhookData, null, 2));
-    
-    // PayOS có thể gửi data với cấu trúc khác nhau
-    const orderCode = webhookData.orderCode || webhookData.data?.orderCode || webhookData.order_code;
-    
-    this.logger.log(`Processing webhook for order: ${orderCode}`);
-
-    if (!orderCode) {
-      this.logger.error('OrderCode is missing in webhook data!');
-      this.logger.error('Webhook keys:', Object.keys(webhookData));
-      throw new BadRequestException('OrderCode is required');
-    }
-
-    // Verify webhook signature đã được xử lý ở controller
-    // Webhook data format từ PayOS:
-    // { orderCode, amount, description, accountNumber, reference, transactionDateTime, ... }
-
-    // Find payment record
-    const payment = await this.paymentRepository.findOne({
-      where: { orderCode: String(orderCode) },
-      relations: ['plan'],
-    });
-
-    if (!payment) {
-      this.logger.error(`Payment not found for order: ${orderCode}`);
-      throw new NotFoundException('Payment not found');
-    }
-
-    // Check if already processed
-    if (payment.status === PaymentStatus.PAID) {
-      this.logger.log(`Payment already processed: ${orderCode}`);
-      return { message: 'Payment already processed' };
-    }
-
-    // Update payment status
-    if (webhookData.code === '00' || webhookData.success) {
-      payment.status = PaymentStatus.PAID;
-      payment.paidAt = new Date();
-      await this.paymentRepository.save(payment);
-
-      // Activate subscription
-      await this.activateSubscription(payment.userId, payment.planId);
-
-      this.logger.log(`Subscription activated for user: ${payment.userId}`);
-      return { message: 'Subscription activated successfully' };
-    } else {
-      payment.status = PaymentStatus.CANCELLED;
-      await this.paymentRepository.save(payment);
-
-      this.logger.log(`Payment cancelled for order: ${webhookData.orderCode}`);
-      return { message: 'Payment cancelled' };
-    }
+    async verifyWebhook(webhookBody: any): Promise<PayOSWebhookData> {
+    return this.payosService.verifyWebhook(webhookBody);
   }
 
   /**
-   * Activate subscription sau khi thanh toán thành công
+   * Chỉ nhận `data` đã verify chữ ký. Chạy trong transaction, khóa dòng chống xử lý trùng.
+   * Lỗi bất ngờ được throw ra để controller trả 500 -> PayOS retry.
    */
-  private async activateSubscription(userId: string, planId: number) {
-    const plan = await this.planRepository.findOne({
+  async handlePaymentWebhook(data: PayOSWebhookData) {
+    const orderCode = String(data.orderCode);
+    this.logger.log(`Processing verified webhook for order: ${orderCode}`);
+
+    return this.paymentRepository.manager.transaction(async (manager) => {
+      const paymentRepo = manager.getRepository(SubscriptionPayment);
+
+      // Khóa dòng payment. Không join relation (FOR UPDATE + LEFT JOIN bị lỗi).
+      const payment = await paymentRepo.findOne({
+        where: { orderCode },
+        lock: { mode: 'pessimistic_write' },
+      });
+
+      if (!payment) {
+        this.logger.warn(`Payment not found for order: ${orderCode}`);
+        return { processed: false, message: 'Payment not found' };
+      }
+
+      if (payment.status === PaymentStatus.PAID) {
+        this.logger.log(`Payment already processed: ${orderCode}`);
+        return { processed: false, message: 'Payment already processed' };
+      }
+
+      // Chỉ tin `code` nằm trong `data` (phần được ký)
+      if (data.code !== '00') {
+        if (payment.status === PaymentStatus.PENDING) {
+          payment.status = PaymentStatus.CANCELLED;
+          payment.callbackData = data;
+          await paymentRepo.save(payment);
+        }
+        this.logger.log(`Payment not successful for order ${orderCode} (code=${data.code})`);
+        return { processed: false, message: 'Payment cancelled' };
+      }
+
+      // So khớp số tiền
+      if (Number(data.amount) !== Number(payment.amount)) {
+        this.logger.error(
+          `Amount mismatch for order ${orderCode}: received=${data.amount}, expected=${payment.amount}. Needs manual review.`,
+        );
+        payment.callbackData = data;
+        await paymentRepo.save(payment);
+        return { processed: false, message: 'Amount mismatch' };
+      }
+
+      payment.status = PaymentStatus.PAID;
+      payment.paidAt = new Date();
+      payment.callbackData = data;
+      await paymentRepo.save(payment);
+
+      await this.activateSubscription(manager, payment.userId, payment.planId);
+
+      this.logger.log(`Subscription activated for user: ${payment.userId}`);
+      return { processed: true, message: 'Subscription activated successfully' };
+    });
+  }
+
+  private async activateSubscription(manager: EntityManager, userId: string, planId: number) {
+    const plan = await manager.getRepository(SubscriptionPlan).findOne({
       where: { id: planId, isActive: true },
     });
 
@@ -213,8 +218,10 @@ export class PaymentService {
       throw new NotFoundException('Subscription plan not found');
     }
 
-    // Deactivate any existing subscription (upgrade case)
-    const updated = await this.subscriptionRepository.update(
+    const subscriptionRepo = manager.getRepository(UserSubscription);
+
+    // Tắt gói cũ (trường hợp nâng cấp)
+    const updated = await subscriptionRepo.update(
       { userId, isActive: true },
       { isActive: false, status: SubscriptionStatus.EXPIRED },
     );
@@ -223,12 +230,12 @@ export class PaymentService {
       this.logger.log(`Deactivated ${updated.affected} old subscription(s) for user ${userId}`);
     }
 
-    // Create new subscription
+    // Tạo gói mới
     const startDate = new Date();
     const endDate = new Date(startDate);
     endDate.setDate(endDate.getDate() + plan.durationDays);
 
-    const subscription = this.subscriptionRepository.create({
+    const subscription = subscriptionRepo.create({
       userId,
       planId,
       startDate,
@@ -239,14 +246,16 @@ export class PaymentService {
       purchasedFromWallet: false,
     });
 
-    await this.subscriptionRepository.save(subscription);
-    this.logger.log(`✅ New ${plan.planName} subscription activated for user ${userId}, expires at ${endDate.toISOString()}`);
+    await subscriptionRepo.save(subscription);
+    this.logger.log(`New ${plan.planName} subscription activated for user ${userId}, expires at ${endDate.toISOString()}`);
   }
-
   /**
    * Get payment history for user
    */
   async getUserPayments(userId: string) {
+     if (!userId) {
+      throw new UnauthorizedException('User not authenticated');
+    }
     return await this.paymentRepository.find({
       where: { userId },
       relations: ['plan'],
@@ -365,27 +374,6 @@ export class PaymentService {
   }
 
   /**
-   * Verify webhook signature từ PayOS
-   */
-  async verifyWebhookSignature(webhookData: any): Promise<boolean> {
-    try {
-      // PayOS SDK có method verifyPaymentWebhookData để verify signature
-      const isValid = this.payosService.verifyWebhookSignature(webhookData);
-      
-      if (isValid) {
-        this.logger.log(' Webhook signature verified successfully');
-      } else {
-        this.logger.warn(' Invalid webhook signature');
-      }
-      
-      return isValid;
-    } catch (error: any) {
-      this.logger.error(`Failed to verify webhook signature: ${error.message}`);
-      return false;
-    }
-  }
-
-  /**
    * Cancel payment by user
    * Only allows cancelling PENDING payments
    */
@@ -436,14 +424,14 @@ export class PaymentService {
       this.logger.log(' Running cron job: Expire old pending payments');
       
       // Tính thời gian 5 phút trước
-      const fiveMinutesAgo = new Date();
-      fiveMinutesAgo.setMinutes(fiveMinutesAgo.getMinutes() - 5);
+      const expireThreshold = new Date();
+      expireThreshold.setMinutes(expireThreshold.getMinutes() - 15);
       
       // Tìm tất cả payments PENDING quá 5 phút
       const expiredPayments = await this.paymentRepository.find({
         where: {
           status: PaymentStatus.PENDING,
-          createdAt: LessThan(fiveMinutesAgo),
+          createdAt: LessThan(expireThreshold),
         },
       });
       
@@ -457,7 +445,7 @@ export class PaymentService {
       await this.paymentRepository.update(
         { 
           status: PaymentStatus.PENDING,
-          createdAt: LessThan(fiveMinutesAgo)
+          createdAt: LessThan(expireThreshold)
         },
         { 
           status: PaymentStatus.EXPIRED 

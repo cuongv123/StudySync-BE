@@ -23,6 +23,20 @@ export interface CreatePaymentLinkDto {
   cancelUrl?: string;
 }
 
+export interface PayOSWebhookData {
+  orderCode: number;
+  amount: number;
+  description: string;
+  accountNumber: string;
+  reference: string;
+  transactionDateTime: string;
+  currency: string;
+  paymentLinkId: string;
+  code: string;
+  desc: string;
+  [key: string]: any;
+}
+
 @Injectable()
 export class PayOSService {
   private readonly logger = new Logger(PayOSService.name);
@@ -108,22 +122,8 @@ export class PayOSService {
    * Verify webhook signature
    * PayOS SDK tự động verify signature dựa vào CHECKSUM_KEY
    */
-  verifyWebhookSignature(webhookData: any): boolean {
-    try {
-      // PayOS SDK có method verifyPaymentWebhookData
-      // Nó sử dụng CHECKSUM_KEY để verify signature trong webhookData
-      const isValid = this.payOS.verifyPaymentWebhookData(webhookData);
-      
-      if (isValid) {
-        this.logger.log('✅ Webhook signature is valid');
-      } else {
-        this.logger.warn('❌ Webhook signature is invalid');
-      }
-      
-      return isValid;
-    } catch (error: any) {
-      this.logger.error(`Webhook verification failed: ${error.message}`);
-      return false;
-    }
+    async verifyWebhook(webhookBody: any): Promise<PayOSWebhookData> {
+    // Hợp lệ -> trả về data đã xác thực. Sai/thiếu chữ ký -> throw.
+    return this.payOS.webhooks.verify(webhookBody);
   }
 }
